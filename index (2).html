@@ -1,0 +1,2811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DialyCare — Dialysis Management Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@0.395.0/dist/umd/lucide.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  i[data-lucide], i[data-lucide] svg { display: inline-flex; vertical-align: middle; flex-shrink: 0; }
+  .btn i[data-lucide] { pointer-events: none; }
+  :root {
+    --sidebar-w: 248px;
+    --hdr-h: 56px;
+    --color-bg: #f8f9fb;
+    --color-surface: #ffffff;
+    --color-border: #e5e7eb;
+    --color-text: #111827;
+    --color-muted: #6b7280;
+    --color-accent: #2563eb;
+    --color-accent-light: #eff6ff;
+    --color-danger: #dc2626;
+    --color-danger-light: #fef2f2;
+    --color-warning: #d97706;
+    --color-warning-light: #fffbeb;
+    --color-success: #059669;
+    --color-success-light: #ecfdf5;
+    --color-info: #0891b2;
+    --color-info-light: #ecfeff;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--color-bg); color: var(--color-text); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
+
+  /* ── Premium Sidebar ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: #0f172a;
+    border-right: none;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 20px 16px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-logo-icon {
+    width: 34px; height: 34px;
+    background: transparent;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+
+  }
+  .sidebar-logo-icon svg { color: #fff; }
+  .sidebar-logo-text h1 { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px; line-height: 1.2; }
+  .sidebar-logo-text span { font-size: 10px; color: rgba(255,255,255,0.38); display: block; margin-top: 1px; letter-spacing: 0.02em; }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 0 8px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  .nav-section {
+    font-size: 9.5px; font-weight: 700;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 14px 20px 5px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 12px; margin: 1px 8px;
+    cursor: pointer;
+    border-radius: 7px;
+    color: rgba(255,255,255,0.52);
+    font-size: 13px; font-weight: 500;
+    transition: background 0.12s, color 0.12s;
+    border-left: none;
+    position: relative;
+  }
+  .nav-item svg { flex-shrink: 0; width: 16px; height: 16px; stroke-width: 1.75; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.88); }
+  .nav-item.active {
+    background: rgba(37,99,235,0.25);
+    color: #93c5fd;
+  }
+  .nav-item.active svg { color: #60a5fa; }
+  .nav-badge {
+    margin-left: auto;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    line-height: 1.4;
+  }
+  .nav-badge-live { background: rgba(5,150,105,0.25); color: #34d399; }
+  .nav-badge-alert { background: rgba(220,38,38,0.3); color: #f87171; }
+  .sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 12px;
+  }
+  .sidebar-footer .user-row { display: flex; align-items: center; gap: 10px; }
+  .sidebar-footer .user-name { font-weight: 600; font-size: 12px; color: rgba(255,255,255,0.85); }
+  .sidebar-footer .user-role { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #2563eb, #0891b2);
+    color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  /* Main content */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #header { height: var(--hdr-h); background: var(--color-surface); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
+  #header h2 { font-size: 16px; font-weight: 600; flex: 1; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  #content { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.1s, border-color 0.1s; white-space: nowrap; }
+  .btn:hover { background: var(--color-bg); }
+  .btn-primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-danger { background: var(--color-danger); color: #fff; border-color: var(--color-danger); }
+
+  /* Cards */
+  .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 16px 20px; box-shadow: var(--shadow); }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-title { font-size: 14px; font-weight: 600; }
+
+  /* Grids */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+
+  /* Stat cards */
+  .stat-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 16px; }
+  .stat-card .label { font-size: 12px; color: var(--color-muted); font-weight: 500; margin-bottom: 6px; }
+  .stat-card .value { font-size: 26px; font-weight: 700; line-height: 1; }
+  .stat-card .change { font-size: 12px; margin-top: 6px; }
+  .stat-card .sub { font-size: 12px; color: var(--color-muted); margin-top: 4px; }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .badge-danger { background: var(--color-danger-light); color: var(--color-danger); }
+  .badge-warning { background: var(--color-warning-light); color: var(--color-warning); }
+  .badge-success { background: var(--color-success-light); color: var(--color-success); }
+  .badge-info { background: var(--color-info-light); color: var(--color-info); }
+  .badge-muted { background: #f3f4f6; color: #6b7280; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 600; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; border-bottom: 1px solid var(--color-border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-bg); }
+  .table-wrap { overflow-x: auto; }
+
+  /* Risk gauge */
+  .risk-meter { position: relative; }
+  .risk-bar { height: 8px; border-radius: 4px; background: linear-gradient(to right, #059669 0%, #d97706 50%, #dc2626 100%); margin: 8px 0; }
+  .risk-bar-track { height: 8px; border-radius: 4px; background: #e5e7eb; position: relative; overflow: visible; }
+  .risk-needle { position: absolute; top: -4px; width: 3px; height: 16px; background: #111; border-radius: 2px; transform: translateX(-50%); transition: left 0.5s; }
+
+  /* Alerts */
+  .alert-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-radius: var(--radius); border: 1px solid var(--color-border); margin-bottom: 8px; background: var(--color-surface); }
+  .alert-item.critical { border-left: 4px solid var(--color-danger); }
+  .alert-item.high { border-left: 4px solid #f59e0b; }
+  .alert-item.medium { border-left: 4px solid #3b82f6; }
+  .alert-item.low { border-left: 4px solid #10b981; }
+  .alert-icon { flex-shrink: 0; display: flex; align-items: center; margin-top: 1px; }
+  .alert-body { flex: 1; }
+  .alert-title { font-weight: 600; font-size: 13px; }
+  .alert-desc { font-size: 12px; color: var(--color-muted); margin-top: 2px; }
+  .alert-meta { font-size: 11px; color: var(--color-muted); margin-top: 4px; }
+
+  /* Forms */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--color-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-control { width: 100%; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius); font-size: 13px; background: var(--color-surface); color: var(--color-text); }
+  .form-control:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+  select.form-control { cursor: pointer; }
+
+  /* Progress */
+  .progress { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--color-border); margin-bottom: 16px; }
+  .tab { padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--color-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+  .tab:hover { color: var(--color-text); }
+
+  /* Section spacing */
+  .section { margin-bottom: 24px; }
+  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+
+  /* Risk score display */
+  .risk-score-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .risk-high { background: #fef2f2; border: 3px solid var(--color-danger); color: var(--color-danger); }
+  .risk-medium { background: #fffbeb; border: 3px solid var(--color-warning); color: var(--color-warning); }
+  .risk-low { background: #ecfdf5; border: 3px solid var(--color-success); color: var(--color-success); }
+  .risk-score-num { font-size: 22px; line-height: 1; }
+  .risk-score-lbl { font-size: 10px; margin-top: 1px; }
+
+  /* Search */
+  .search-box { position: relative; }
+  .search-box input { padding-left: 34px; }
+  .search-box .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-muted); pointer-events: none; display: flex; align-items: center; }
+
+  /* Patient portal card */
+  .portal-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+  .portal-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .portal-section h3 i { flex-shrink: 0; }
+
+  /* Chart containers */
+  .chart-container { position: relative; }
+
+  /* Timeline */
+  .timeline-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--color-border); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+
+  /* Insight item */
+  .insight-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-border); }
+  .insight-item:last-child { border-bottom: none; }
+  .insight-icon { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .insight-label { font-size: 12px; color: var(--color-muted); }
+  .insight-value { font-size: 13px; font-weight: 600; }
+
+  /* Medication pill */
+  .med-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: 13px; }
+  .med-item:last-child { border-bottom: none; }
+
+  /* Hidden views */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Placeholder badge */
+  .ml-placeholder { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #f3e8ff; color: #7c3aed; border-radius: 100px; font-size: 11px; font-weight: 600; border: 1px dashed #c4b5fd; }
+
+  /* API placeholder box */
+  .api-placeholder { background: #f8fafc; border: 1px dashed var(--color-border); border-radius: var(--radius); padding: 14px; font-size: 12px; font-family: 'Courier New', monospace; color: var(--color-muted); }
+
+  .text-danger { color: var(--color-danger); }
+  .text-warning { color: var(--color-warning); }
+  .text-success { color: var(--color-success); }
+  .text-muted { color: var(--color-muted); }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .gap-16 { gap: 16px; }
+  .flex-1 { flex: 1; }
+  .justify-between { justify-content: space-between; }
+  .font-600 { font-weight: 600; }
+  .text-sm { font-size: 12px; }
+  .text-xs { font-size: 11px; }
+
+  /* ── Live Monitoring ── */
+  .monitor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+
+  .monitor-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.18s, box-shadow 0.18s;
+    position: relative;
+  }
+  .monitor-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+
+  /* Critical — red glow + red header band */
+  .monitor-card.risk-critical {
+    border: 1.5px solid var(--color-danger);
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.12), var(--shadow);
+  }
+  .monitor-card.risk-critical .monitor-header {
+    background: linear-gradient(135deg, #fef2f2 0%, #fff 100%);
+    border-bottom: 2px solid var(--color-danger);
+  }
+  .monitor-card.risk-critical .monitor-rank-badge { background: var(--color-danger); }
+
+  /* High — orange glow */
+  .monitor-card.risk-high {
+    border: 1.5px solid var(--color-warning);
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.10), var(--shadow);
+  }
+  .monitor-card.risk-high .monitor-header {
+    background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+    border-bottom: 2px solid var(--color-warning);
+  }
+  .monitor-card.risk-high .monitor-rank-badge { background: var(--color-warning); }
+
+  /* Medium — blue */
+  .monitor-card.risk-medium {
+    border-top: 3px solid #3b82f6;
+  }
+  .monitor-card.risk-medium .monitor-rank-badge { background: #3b82f6; }
+
+  /* Low — green */
+  .monitor-card.risk-low {
+    border-top: 3px solid var(--color-success);
+  }
+  .monitor-card.risk-low .monitor-rank-badge { background: var(--color-success); }
+
+  .monitor-rank-badge {
+    position: absolute; top: 10px; right: 10px;
+    color: #fff; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 100px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+
+  .monitor-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid var(--color-border); }
+  .monitor-body { padding: 14px 16px; }
+  .monitor-vitals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .vital-box {
+    background: var(--color-bg);
+    border-radius: var(--radius);
+    padding: 10px 8px;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    transition: background 0.2s;
+  }
+  .vital-box.vital-box-alert { background: #fef2f2; border-color: var(--color-danger); }
+  .vital-box.vital-box-warn  { background: #fffbeb; border-color: var(--color-warning); }
+  .vital-label { font-size: 10px; color: var(--color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .vital-value { font-size: 20px; font-weight: 700; line-height: 1.2; margin-top: 3px; }
+  .vital-unit  { font-size: 10px; color: var(--color-muted); margin-top: 1px; }
+  .vital-abnormal { color: var(--color-danger); }
+  .vital-warning  { color: var(--color-warning); }
+  .vital-normal   { color: var(--color-text); }
+
+  .session-progress-bar { height: 8px; border-radius: 5px; background: #e5e7eb; overflow: hidden; margin-bottom: 4px; }
+  .session-progress-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #2563eb 0%, #0891b2 100%); transition: width 0.8s; }
+
+  .risk-score-mini {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: var(--radius);
+    background: var(--color-bg); border: 1px solid var(--color-border);
+    margin-bottom: 10px;
+  }
+  .risk-score-mini-bar { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+  .risk-score-mini-fill { height: 100%; border-radius: 3px; transition: width 0.6s; }
+
+  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success); display: inline-block; animation: pulse-anim 1.4s infinite; }
+  @keyframes pulse-anim { 0%,100%{opacity:1; transform:scale(1);} 50%{opacity:0.5; transform:scale(1.3);} }
+  .monitor-footer { padding: 10px 16px; background: var(--color-bg); border-top: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--color-muted); }
+  .live-ticker { font-size: 11px; color: var(--color-muted); margin-left: auto; }
+  .alert-flash { animation: flash-anim 1.5s infinite; }
+  @keyframes flash-anim { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  /* ── Clinical Profile ── */
+  .profile-sidebar { width: 260px; flex-shrink: 0; }
+  .profile-main   { flex: 1; min-width: 0; }
+  .profile-avatar { width: 64px; height: 64px; border-radius: 50%; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+  .profile-info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--color-border); font-size: 13px; }
+  .profile-info-row:last-child { border-bottom: none; }
+  .profile-info-label { color: var(--color-muted); font-size: 12px; }
+  .profile-info-val   { font-weight: 600; text-align: right; }
+  .lab-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: 13px; }
+  .lab-row:last-child { border-bottom: none; }
+  .lab-name  { flex: 1; }
+  .lab-val   { font-weight: 700; min-width: 80px; text-align: right; }
+  .lab-ref   { font-size: 11px; color: var(--color-muted); min-width: 90px; text-align: right; }
+  .lab-bar-wrap { width: 70px; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: visible; position: relative; flex-shrink: 0; }
+  .lab-bar-marker { position: absolute; top: -4px; width: 3px; height: 14px; border-radius: 2px; transform: translateX(-50%); }
+  .history-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-border); }
+  .history-row:last-child { border-bottom: none; }
+  .history-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .risk-history-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: 13px; }
+  .risk-history-row:last-child { border-bottom: none; }
+  .note-card { background: var(--color-bg); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; border-left: 3px solid var(--color-accent); font-size: 13px; }
+  .note-card:last-child { margin-bottom: 0; }
+  .mini-chart { height: 120px; }
+  .profile-tabs .tab { font-size: 13px; padding: 8px 14px; }
+  .cp-section { display: none; }
+  .cp-section.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">
+      <img src="logo.png" alt="DialyCare Logo" style="width:35px;height:35px;object-fit:contain;">
+    </div>
+    <div class="sidebar-logo-text">
+      <h1>KidneyCare</h1>
+      <span>Dialysis Management Platform</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" data-view="dashboard">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </div>
+    <div class="nav-item" data-view="patients">
+      <i data-lucide="users"></i> Patients
+    </div>
+    <div class="nav-item" data-view="monitoring">
+      <i data-lucide="activity"></i> Live Monitoring
+      <span class="nav-badge nav-badge-live">LIVE</span>
+    </div>
+
+    <div class="nav-section">Clinical</div>
+    <div class="nav-item" data-view="sessions">
+      <i data-lucide="syringe"></i> Dialysis Sessions
+    </div>
+    <div class="nav-item" data-view="labs">
+      <i data-lucide="flask-conical"></i> Lab Results
+    </div>
+    <div class="nav-item" data-view="medications">
+      <i data-lucide="pill"></i> Medications
+    </div>
+
+    <div class="nav-section">Intelligence</div>
+    <div class="nav-item" data-view="risk">
+      <i data-lucide="shield-alert"></i> Risk Engine
+    </div>
+    <div class="nav-item" data-view="insights">
+      <i data-lucide="brain-circuit"></i> AI Insights
+    </div>
+    <div class="nav-item" data-view="alerts">
+      <i data-lucide="bell"></i> Alerts Center
+      <span id="alert-badge" class="nav-badge nav-badge-alert">7</span>
+    </div>
+
+    <div class="nav-section">Reports</div>
+    <div class="nav-item" data-view="reports">
+      <i data-lucide="bar-chart-3"></i> Reports &amp; Analytics
+    </div>
+
+    <div class="nav-section">Patient</div>
+    <div class="nav-item" data-view="portal">
+      <i data-lucide="user-round"></i> Patient Portal
+    </div>
+    <div class="nav-item" data-view="profile">
+      <i data-lucide="file-text"></i> Clinical Profile
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="avatar">DR</div>
+      <div>
+        <div class="user-name">Dr. Rahman</div>
+        <div class="user-role">Nephrologist · DialyCare</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div id="main">
+  <header id="header">
+    <h2 id="page-title">Dashboard</h2>
+    <div class="header-actions" id="header-actions">
+      <span id="current-date" style="font-size:12px; color:var(--color-muted);"></span>
+      <button class="btn btn-sm" onclick="navigate('alerts')"><i data-lucide="bell" style="width:14px;height:14px;"></i> Alerts</button>
+      <button class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:14px;height:14px;"></i> New Session</button>
+    </div>
+  </header>
+  <main id="content">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="grid-4 mb-16">
+        <div class="stat-card">
+          <div class="label">Total Patients</div>
+          <div class="value" style="color:var(--color-accent);">142</div>
+          <div class="sub">Active dialysis patients</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Sessions Today</div>
+          <div class="value" style="color:var(--color-success);">38</div>
+          <div class="sub">12 in progress</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">High-Risk Patients</div>
+          <div class="value" style="color:var(--color-danger);">23</div>
+          <div class="sub">Needs immediate review</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active Alerts</div>
+          <div class="value" style="color:var(--color-warning);">7</div>
+          <div class="sub">3 critical</div>
+        </div>
+      </div>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Sessions This Week</span>
+            <span class="text-muted text-sm">Mon–Sun</span>
+          </div>
+          <div class="chart-container" style="height:180px;">
+            <canvas id="chart-sessions"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Risk Distribution</span>
+            <span class="text-muted text-sm">All patients</span>
+          </div>
+          <div class="chart-container" style="height:180px;">
+            <canvas id="chart-risk"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Alerts</span>
+            <button class="btn btn-sm" onclick="navigate('alerts')">View all</button>
+          </div>
+          <div id="dash-alerts"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Today's Schedule</span>
+            <span class="text-muted text-sm">June 12, 2026</span>
+          </div>
+          <div id="dash-schedule"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENTS -->
+    <div id="view-patients" class="view">
+      <div class="filter-bar">
+        <div class="search-box flex-1" style="max-width:280px;">
+          <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
+          <input id="patient-search" class="form-control" type="text" placeholder="Search patients..." oninput="filterPatients()">
+        </div>
+        <select class="form-control" id="patient-risk-filter" onchange="filterPatients()" style="width:140px;">
+          <option value="">All Risk Levels</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <select class="form-control" id="patient-status-filter" onchange="filterPatients()" style="width:130px;">
+          <option value="">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+        <button class="btn btn-primary btn-sm">+ Add Patient</button>
+      </div>
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table id="patients-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>ID</th>
+                <th>Age</th>
+                <th>Diagnosis</th>
+                <th>Risk Level</th>
+                <th>Last Session</th>
+                <th>Next Session</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="patients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIALYSIS SESSIONS -->
+    <div id="view-sessions" class="view">
+      <div class="filter-bar">
+        <input class="form-control" type="date" id="session-date-filter" style="width:160px;" onchange="filterSessions()">
+        <select class="form-control" id="session-status-filter" onchange="filterSessions()" style="width:150px;">
+          <option value="">All Statuses</option>
+          <option value="Completed">Completed</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="Missed">Missed</option>
+        </select>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;">+ Log Session</button>
+      </div>
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Duration</th>
+                <th>UF Volume (L)</th>
+                <th>Pre BP</th>
+                <th>Post BP</th>
+                <th>Kt/V</th>
+                <th>Complications</th>
+                <th>Status</th>
+                <th>Nurse</th>
+              </tr>
+            </thead>
+            <tbody id="sessions-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAB RESULTS -->
+    <div id="view-labs" class="view">
+      <div class="filter-bar">
+        <div class="search-box flex-1" style="max-width:280px;">
+          <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
+          <input class="form-control" type="text" placeholder="Search labs..." id="lab-search" oninput="filterLabs()">
+        </div>
+        <select class="form-control" style="width:160px;" id="lab-type-filter" onchange="filterLabs()">
+          <option value="">All Test Types</option>
+          <option value="CBC">CBC</option>
+          <option value="BMP">BMP</option>
+          <option value="Phosphorus">Phosphorus</option>
+          <option value="PTH">PTH</option>
+          <option value="Iron">Iron Studies</option>
+        </select>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;">+ Add Lab Result</button>
+      </div>
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Test</th>
+                <th>Value</th>
+                <th>Reference Range</th>
+                <th>Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="labs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDICATIONS -->
+    <div id="view-medications" class="view">
+      <div class="filter-bar">
+        <div class="search-box flex-1" style="max-width:280px;">
+          <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
+          <input class="form-control" type="text" placeholder="Search medications...">
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;">+ Add Medication</button>
+      </div>
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Medication</th>
+                <th>Dose</th>
+                <th>Frequency</th>
+                <th>Route</th>
+                <th>Prescriber</th>
+                <th>Start Date</th>
+                <th>Status</th>
+                <th>Interaction Flag</th>
+              </tr>
+            </thead>
+            <tbody id="meds-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RISK ENGINE -->
+    <div id="view-risk" class="view">
+      <div class="flex gap-16 mb-16">
+        <div class="card flex-1">
+          <div class="card-header">
+            <span class="card-title">Risk Score Calculator</span>
+            <span class="ml-placeholder"><i data-lucide="brain-circuit" style="width:12px;height:12px;"></i> ML Integration Placeholder</span>
+          </div>
+          <div class="grid-2 gap-12 mb-12">
+            <div class="form-group">
+              <label class="form-label">Select Patient</label>
+              <select class="form-control" id="risk-patient-select" onchange="calculateRisk()">
+                <option value="">-- Select Patient --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Age</label>
+              <input class="form-control" type="number" id="r-age" placeholder="e.g. 65" oninput="calculateRisk()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hemoglobin (g/dL)</label>
+              <input class="form-control" type="number" id="r-hgb" placeholder="e.g. 10.5" step="0.1" oninput="calculateRisk()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Potassium (mEq/L)</label>
+              <input class="form-control" type="number" id="r-k" placeholder="e.g. 5.2" step="0.1" oninput="calculateRisk()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Systolic BP (mmHg)</label>
+              <input class="form-control" type="number" id="r-sbp" placeholder="e.g. 140" oninput="calculateRisk()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kt/V Ratio</label>
+              <input class="form-control" type="number" id="r-ktv" placeholder="e.g. 1.2" step="0.01" oninput="calculateRisk()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phosphorus (mg/dL)</label>
+              <input class="form-control" type="number" id="r-phos" placeholder="e.g. 5.5" step="0.1" oninput="calculateRisk()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sessions Missed (last month)</label>
+              <input class="form-control" type="number" id="r-missed" placeholder="0" oninput="calculateRisk()">
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+            <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="r-hypotension" onchange="calculateRisk()"> Repeated Hypotension
+            </label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer; margin-left:16px;">
+              <input type="checkbox" id="r-diabetes" onchange="calculateRisk()"> Diabetes
+            </label>
+            <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer; margin-left:16px;">
+              <input type="checkbox" id="r-cardiac" onchange="calculateRisk()"> Cardiac Disease
+            </label>
+          </div>
+          <button class="btn btn-primary" onclick="calculateRisk()"><i data-lucide="zap" style="width:14px;height:14px;"></i> Calculate Risk</button>
+        </div>
+
+        <div class="card" style="width:320px; flex-shrink:0;">
+          <div class="card-header">
+            <span class="card-title">Risk Assessment Result</span>
+          </div>
+          <div id="risk-result" style="display:flex; flex-direction:column; align-items:center; padding:20px 0;">
+            <div style="color:var(--color-muted); font-size:13px; text-align:center; margin-top:20px;">
+              Fill in patient data to calculate risk score
+            </div>
+          </div>
+          <div class="mt-16">
+            <div class="card-title mb-8">ML Integration Endpoint</div>
+            <div class="api-placeholder">POST /predict-risk<br><br>{<br>&nbsp;&nbsp;"risk_score": 82,<br>&nbsp;&nbsp;"risk_level": "High",<br>&nbsp;&nbsp;"risk_factors": [],<br>&nbsp;&nbsp;"recommendations": []<br>}</div>
+            <div style="font-size:11px; color:var(--color-muted); margin-top:8px;">Replace rule-based engine with ML model predictions when ready.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Patients — Risk Overview</span>
+          <button class="btn btn-sm">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table id="risk-overview-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Risk Score</th>
+                <th>Risk Level</th>
+                <th>Key Risk Factors</th>
+                <th>Last Calculated</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="risk-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI INSIGHTS -->
+    <div id="view-insights" class="view">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+        <span class="ml-placeholder"><i data-lucide="brain-circuit" style="width:12px;height:12px;"></i> AI Insights — ML Integration Ready</span>
+        <span style="font-size:12px; color:var(--color-muted);">Currently powered by rule-based analysis</span>
+      </div>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Active Risk Factors</span>
+            <span class="badge badge-danger">Population-wide</span>
+          </div>
+          <div id="risk-factors-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Suggested Actions</span>
+          </div>
+          <div id="suggested-actions-list"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Lab Trend Analysis</span>
+            <span class="text-muted text-sm">Last 8 weeks</span>
+          </div>
+          <div class="chart-container" style="height:200px;">
+            <canvas id="chart-labs-trend"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">High-Risk Patients</span>
+            <button class="btn btn-sm" onclick="navigate('risk')">View engine</button>
+          </div>
+          <div id="high-risk-patients-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTS CENTER -->
+    <div id="view-alerts" class="view">
+      <div class="filter-bar">
+        <div class="search-box flex-1" style="max-width:280px;">
+          <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
+          <input class="form-control" type="text" placeholder="Search alerts..." id="alert-search" oninput="filterAlerts()">
+        </div>
+        <select class="form-control" style="width:130px;" id="alert-severity-filter" onchange="filterAlerts()">
+          <option value="">All Severity</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select class="form-control" style="width:140px;" id="alert-status-filter" onchange="filterAlerts()">
+          <option value="">All Statuses</option>
+          <option value="New">New</option>
+          <option value="Under Review">Under Review</option>
+          <option value="Closed">Closed</option>
+        </select>
+        <button class="btn btn-sm">Mark All Read</button>
+        <button class="btn btn-primary btn-sm">+ Create Alert</button>
+      </div>
+      <div class="grid-4 mb-16">
+        <div class="stat-card" style="border-left:4px solid var(--color-danger);">
+          <div class="label">Critical</div>
+          <div class="value text-danger" id="count-critical">0</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #f59e0b;">
+          <div class="label">High</div>
+          <div class="value text-warning" id="count-high">0</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #3b82f6;">
+          <div class="label">Medium</div>
+          <div class="value" style="color:#3b82f6;" id="count-medium">0</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--color-success);">
+          <div class="label">Low</div>
+          <div class="value text-success" id="count-low">0</div>
+        </div>
+      </div>
+      <div id="alerts-list"></div>
+    </div>
+
+    <!-- REPORTS & ANALYTICS -->
+    <div id="view-reports" class="view">
+      <div class="tabs">
+        <div class="tab active" onclick="switchReportTab('outcomes', this)">Patient Outcomes</div>
+        <div class="tab" onclick="switchReportTab('complications', this)">Complications</div>
+        <div class="tab" onclick="switchReportTab('trends', this)">High-Risk Trends</div>
+        <div class="tab" onclick="switchReportTab('performance', this)">Center Performance</div>
+        <div class="tab" onclick="switchReportTab('monthly', this)">Monthly Summary</div>
+      </div>
+
+      <div id="report-outcomes" class="report-tab">
+        <div class="flex justify-between items-center mb-16">
+          <div style="font-size:13px; color:var(--color-muted);">Patient outcomes over last 6 months</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-sm"><i data-lucide="download" style="width:13px;height:13px;"></i> Export PDF</button>
+            <button class="btn btn-sm"><i data-lucide="download" style="width:13px;height:13px;"></i> Export CSV</button>
+          </div>
+        </div>
+        <div class="grid-3 mb-16">
+          <div class="stat-card"><div class="label">Avg Kt/V</div><div class="value text-success">1.38</div><div class="sub">Target &gt;1.2 — On track</div></div>
+          <div class="stat-card"><div class="label">Hospitalization Rate</div><div class="value text-warning">12.4%</div><div class="sub">vs 14.1% last quarter</div></div>
+          <div class="stat-card"><div class="label">Session Adherence</div><div class="value text-success">91%</div><div class="sub">142 active patients</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-header"><span class="card-title">Kt/V Over Time</span></div><div class="chart-container" style="height:200px;"><canvas id="chart-ktv"></canvas></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Hemoglobin Levels</span></div><div class="chart-container" style="height:200px;"><canvas id="chart-hgb"></canvas></div></div>
+        </div>
+      </div>
+
+      <div id="report-complications" class="report-tab" style="display:none;">
+        <div class="flex justify-between items-center mb-16">
+          <div style="font-size:13px; color:var(--color-muted);">Most common complications — last 6 months</div>
+          <button class="btn btn-sm"><i data-lucide="download" style="width:13px;height:13px;"></i> Export CSV</button>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-header"><span class="card-title">Complications by Type</span></div><div class="chart-container" style="height:220px;"><canvas id="chart-comp-type"></canvas></div></div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Top Complications</span></div>
+            <div id="comp-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="report-trends" class="report-tab" style="display:none;">
+        <div class="flex justify-between items-center mb-16">
+          <div style="font-size:13px; color:var(--color-muted);">High-risk patient trends over time</div>
+          <button class="btn btn-sm"><i data-lucide="download" style="width:13px;height:13px;"></i> Export</button>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Risk Level Distribution — Monthly</span></div><div class="chart-container" style="height:240px;"><canvas id="chart-risk-trends"></canvas></div></div>
+      </div>
+
+      <div id="report-performance" class="report-tab" style="display:none;">
+        <div class="flex justify-between items-center mb-16">
+          <div style="font-size:13px; color:var(--color-muted);">Dialysis center performance metrics</div>
+          <button class="btn btn-sm"><i data-lucide="download" style="width:13px;height:13px;"></i> Export</button>
+        </div>
+        <div class="grid-4 mb-16">
+          <div class="stat-card"><div class="label">Avg Session Duration</div><div class="value">3h 48m</div></div>
+          <div class="stat-card"><div class="label">Machine Utilization</div><div class="value text-success">87%</div></div>
+          <div class="stat-card"><div class="label">Nurse:Patient Ratio</div><div class="value">1:4</div></div>
+          <div class="stat-card"><div class="label">Patient Satisfaction</div><div class="value text-success">4.3/5</div></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Weekly Session Volume</span></div><div class="chart-container" style="height:200px;"><canvas id="chart-perf"></canvas></div></div>
+      </div>
+
+      <div id="report-monthly" class="report-tab" style="display:none;">
+        <div class="flex justify-between items-center mb-16">
+          <div style="font-size:13px; color:var(--color-muted);">Monthly summary — June 2026</div>
+          <div style="display:flex; gap:8px;">
+            <select class="form-control" style="width:140px;"><option>June 2026</option><option>May 2026</option><option>April 2026</option></select>
+            <button class="btn btn-sm"><i data-lucide="download" style="width:13px;height:13px;"></i> Export PDF</button>
+          </div>
+        </div>
+        <div class="grid-3 mb-16">
+          <div class="stat-card"><div class="label">Total Sessions</div><div class="value">486</div></div>
+          <div class="stat-card"><div class="label">New Patients</div><div class="value text-accent" style="color:var(--color-accent);">8</div></div>
+          <div class="stat-card"><div class="label">Adverse Events</div><div class="value text-danger">14</div></div>
+        </div>
+        <div class="card" id="monthly-report-card">
+          <div class="card-header"><span class="card-title">Monthly Narrative Summary</span></div>
+          <div style="font-size:13px; line-height:1.7; color:var(--color-muted);" id="monthly-narrative"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENT PORTAL -->
+    <div id="view-portal" class="view">
+      <div class="flex gap-12 mb-16 items-center">
+        <div class="form-group" style="margin:0;">
+          <select class="form-control" id="portal-patient-select" onchange="loadPortal()" style="width:220px;">
+            <option value="">-- Select Patient --</option>
+          </select>
+        </div>
+        <span style="font-size:12px; color:var(--color-muted);">Simplified patient-facing view</span>
+      </div>
+      <div id="portal-content" style="display:none;">
+        <div class="grid-2">
+          <div>
+            <div class="portal-section">
+              <h3><i data-lucide="calendar" style="width:15px;height:15px;color:var(--color-accent);"></i> Upcoming Appointments</h3>
+              <div id="portal-appointments"></div>
+            </div>
+            <div class="portal-section">
+              <h3><i data-lucide="pill" style="width:15px;height:15px;color:var(--color-accent);"></i> Current Medications</h3>
+              <div id="portal-meds"></div>
+            </div>
+            <div class="portal-section">
+              <h3><i data-lucide="lightbulb" style="width:15px;height:15px;color:var(--color-accent);"></i> Health Tips</h3>
+              <div id="portal-tips"></div>
+            </div>
+          </div>
+          <div>
+            <div class="portal-section">
+              <h3><i data-lucide="flask-conical" style="width:15px;height:15px;color:var(--color-accent);"></i> Recent Lab Results</h3>
+              <div id="portal-labs"></div>
+            </div>
+            <div class="portal-section">
+              <h3><i data-lucide="syringe" style="width:15px;height:15px;color:var(--color-accent);"></i> Last Dialysis Session</h3>
+              <div id="portal-last-session"></div>
+            </div>
+            <div class="portal-section">
+              <h3><i data-lucide="clipboard-list" style="width:15px;height:15px;color:var(--color-accent);"></i> Doctor Recommendations</h3>
+              <div id="portal-notes"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="portal-empty" style="text-align:center; padding:60px; color:var(--color-muted);">
+        Select a patient to view their portal
+      </div>
+    </div>
+
+    <!-- LIVE MONITORING -->
+    <div id="view-monitoring" class="view">
+      <div class="filter-bar">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="pulse-dot"></span>
+          <span style="font-size:13px; font-weight:600; color:var(--color-success);">Live — Updates every 30s</span>
+        </div>
+        <span id="monitor-count" style="font-size:13px; color:var(--color-muted); margin-left:4px;"></span>
+        <div style="margin-left:auto; display:flex; gap:8px;">
+          <select class="form-control" id="monitor-risk-filter" style="width:150px;" onchange="renderMonitoring()">
+            <option value="">All Risk Levels</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <button class="btn btn-sm" onclick="tickMonitoring()"><i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Refresh</button>
+          <button class="btn btn-primary btn-sm" onclick="navigate('alerts')"><i data-lucide="bell" style="width:13px;height:13px;"></i> View Alerts</button>
+        </div>
+      </div>
+
+      <!-- Summary bar -->
+      <div class="grid-4 mb-16">
+        <div class="stat-card" style="border-left:4px solid var(--color-success);">
+          <div class="label">Active Sessions</div>
+          <div class="value text-success" id="mon-active">0</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--color-danger);">
+          <div class="label">Critical / High Risk</div>
+          <div class="value text-danger" id="mon-highrisk">0</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--color-warning);">
+          <div class="label">Hypotension Events</div>
+          <div class="value text-warning" id="mon-hypo">0</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--color-accent);">
+          <div class="label">Avg Session Progress</div>
+          <div class="value" style="color:var(--color-accent);" id="mon-progress">0%</div>
+        </div>
+      </div>
+
+      <div id="monitoring-grid" class="monitor-grid"></div>
+    </div>
+
+    <!-- CLINICAL PROFILE -->
+    <div id="view-profile" class="view">
+      <div class="filter-bar mb-16">
+        <select class="form-control" id="profile-patient-select" onchange="loadProfile()" style="width:240px;">
+          <option value="">— Select Patient —</option>
+        </select>
+        <span style="font-size:12px; color:var(--color-muted);">Clinician-facing full clinical profile</span>
+        <div style="margin-left:auto; display:flex; gap:8px;">
+          <button class="btn btn-sm"><i data-lucide="download" style="width:13px;height:13px;"></i> Export PDF</button>
+          <button class="btn btn-primary btn-sm" onclick="navigate('risk')"><i data-lucide="shield-alert" style="width:13px;height:13px;"></i> Risk Engine</button>
+        </div>
+      </div>
+
+      <div id="profile-empty" style="text-align:center; padding:60px; color:var(--color-muted);">Select a patient to load their clinical profile</div>
+
+      <div id="profile-content" style="display:none;">
+        <!-- Top banner -->
+        <div class="card mb-16" style="padding:16px 20px;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div id="cp-avatar" class="profile-avatar"></div>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                <span id="cp-name" style="font-size:20px; font-weight:700;"></span>
+                <span id="cp-risk-badge"></span>
+                <span id="cp-risk-score-pill" class="ml-placeholder" style="font-size:12px;"></span>
+              </div>
+              <div id="cp-subline" style="font-size:13px; color:var(--color-muted);"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; font-size:13px;" id="cp-quick-stats"></div>
+          </div>
+        </div>
+
+        <!-- Profile tabs -->
+        <div class="tabs profile-tabs" id="profile-tabs">
+          <div class="tab active" onclick="switchProfileTab('vitals',this)">Vitals &amp; Trends</div>
+          <div class="tab" onclick="switchProfileTab('labs',this)">Laboratory</div>
+          <div class="tab" onclick="switchProfileTab('medications',this)">Medications</div>
+          <div class="tab" onclick="switchProfileTab('history',this)">Dialysis History</div>
+          <div class="tab" onclick="switchProfileTab('ai',this)">AI Risk History</div>
+          <div class="tab" onclick="switchProfileTab('notes',this)">Doctor Notes</div>
+        </div>
+
+        <!-- VITALS TAB -->
+        <div id="cp-vitals" class="cp-section active">
+          <div class="grid-2 mb-16">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Blood Pressure History</span><span class="text-muted text-sm">Last 8 sessions</span></div>
+              <div class="mini-chart" style="height:160px;"><canvas id="cp-chart-bp"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Heart Rate</span><span class="text-muted text-sm">Last 8 sessions</span></div>
+              <div class="mini-chart" style="height:160px;"><canvas id="cp-chart-hr"></canvas></div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Weight Trend (Pre-dialysis)</span><span class="text-muted text-sm">kg</span></div>
+              <div class="mini-chart" style="height:160px;"><canvas id="cp-chart-weight"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Fluid Balance (UF Volume)</span><span class="text-muted text-sm">Litres removed per session</span></div>
+              <div class="mini-chart" style="height:160px;"><canvas id="cp-chart-uf"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LABS TAB -->
+        <div id="cp-labs" class="cp-section">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Latest Lab Panel</span></div>
+              <div id="cp-lab-panel"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Lab Trends</span><span class="text-muted text-sm">6-month</span></div>
+              <div style="height:260px;"><canvas id="cp-chart-labs"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MEDICATIONS TAB -->
+        <div id="cp-medications" class="cp-section">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Current Medications</span><button class="btn btn-sm btn-primary">+ Add Medication</button></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Medication</th><th>Dose</th><th>Frequency</th><th>Route</th><th>Start Date</th><th>Side Effects</th><th>Alert</th><th>Status</th></tr></thead>
+                <tbody id="cp-meds-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="cp-history" class="cp-section">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Dialysis Session History</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Duration</th><th>UF Volume</th><th>Pre BP</th><th>Post BP</th><th>Heart Rate</th><th>Kt/V</th><th>Complications</th><th>Nurse</th><th>Status</th></tr></thead>
+                <tbody id="cp-history-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI RISK TAB -->
+        <div id="cp-ai" class="cp-section">
+
+          <!-- XGBoost API Status Bar -->
+          <div style="display:flex; align-items:center; justify-content:space-between; background:#f8fafc; border:1px solid var(--color-border); border-radius:var(--radius); padding:10px 14px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:12px; font-weight:600;">XGBoost API</span>
+              <span class="xgb-status"></span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-sm" onclick="checkXGBoostAPI()">
+                <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Refresh Status
+              </button>
+              <button class="btn btn-primary btn-sm" id="btn-run-xgb" onclick="handleRunXGBoost()">
+                <i data-lucide="zap" style="width:12px;height:12px;"></i> Run XGBoost
+              </button>
+            </div>
+          </div>
+
+          <div class="grid-2 mb-16">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Risk Score Trend</span>
+                <span style="font-size:10px; padding:3px 8px; background:#f3e8ff; color:#7c3aed; border-radius:100px; font-weight:600; border:1px dashed #c4b5fd;">
+                  <i data-lucide="brain-circuit" style="width:10px;height:10px;"></i> XGBoost
+                </span>
+              </div>
+              <div style="height:200px;"><canvas id="cp-chart-risk-trend"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Current Risk Breakdown</span>
+                <span id="cp-risk-source" style="font-size:10px; color:var(--color-muted);"></span>
+              </div>
+              <div id="cp-risk-breakdown"></div>
+            </div>
+          </div>
+
+          <!-- Feature Importances from XGBoost -->
+          <div class="card mb-16" id="cp-feature-importance-card" style="display:none;">
+            <div class="card-header">
+              <span class="card-title">XGBoost Feature Importances</span>
+              <span style="font-size:11px; color:var(--color-muted);">How much each feature contributes to this patient's risk score</span>
+            </div>
+            <div id="cp-feature-importances" style="padding:4px 0;"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Risk History Log</span>
+              <span class="text-muted text-sm" id="cp-risk-engine-label">Rule-based engine</span>
+            </div>
+            <div id="cp-risk-history-list"></div>
+          </div>
+        </div>
+
+        <!-- NOTES TAB -->
+        <div id="cp-notes" class="cp-section">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Doctor Notes &amp; Recommendations</span><button class="btn btn-primary btn-sm">+ Add Note</button></div>
+              <div id="cp-notes-list"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Follow-up Actions</span></div>
+              <div id="cp-followup-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============================================================
+// MOCK DATABASE
+// ============================================================
+const DB = {
+  users: [
+    { id: 1, name: 'Dr. Ali Rahman', role: 'nephrologist', email: 'arahman@dialycare.com' },
+    { id: 2, name: 'Nurse Sarah Malik', role: 'nurse', email: 'smalik@dialycare.com' },
+    { id: 3, name: 'Nurse James Okonkwo', role: 'nurse', email: 'jokonkwo@dialycare.com' },
+  ],
+  patients: [
+    { id: 'P001', name: 'Fatima Al-Sayed', age: 62, gender: 'F', diagnosis: 'CKD Stage 5 (ESRD)', modality: 'Hemodialysis', access: 'AVF', start: '2022-03-10', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-50-1234567', risk: null },
+    { id: 'P002', name: 'Ahmed Khalid', age: 58, gender: 'M', diagnosis: 'Diabetic Nephropathy', modality: 'Hemodialysis', access: 'Tunneled Catheter', start: '2021-07-22', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-55-2345678', risk: null },
+    { id: 'P003', name: 'Nour Ibrahim', age: 45, gender: 'F', diagnosis: 'Hypertensive Nephropathy', modality: 'Hemodialysis', access: 'AVG', start: '2023-01-15', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-50-3456789', risk: null },
+    { id: 'P004', name: 'Mohammad Hassan', age: 71, gender: 'M', diagnosis: 'Polycystic Kidney Disease', modality: 'Hemodialysis', access: 'AVF', start: '2020-09-05', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-55-4567890', risk: null },
+    { id: 'P005', name: 'Lina Aboud', age: 39, gender: 'F', diagnosis: 'Lupus Nephritis', modality: 'Hemodialysis', access: 'AVF', start: '2024-02-28', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-50-5678901', risk: null },
+    { id: 'P006', name: 'Khalid Mansour', age: 67, gender: 'M', diagnosis: 'CKD Stage 5 (ESRD)', modality: 'Hemodialysis', access: 'Tunneled Catheter', start: '2019-11-12', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-55-6789012', risk: null },
+    { id: 'P007', name: 'Sara Nasser', age: 54, gender: 'F', diagnosis: 'Diabetic Nephropathy', modality: 'Hemodialysis', access: 'AVF', start: '2022-08-18', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-50-7890123', risk: null },
+    { id: 'P008', name: 'Omar Al-Rashid', age: 48, gender: 'M', diagnosis: 'IgA Nephropathy', modality: 'Hemodialysis', access: 'AVG', start: '2023-05-07', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-55-8901234', risk: null },
+    { id: 'P009', name: 'Hana Youssef', age: 76, gender: 'F', diagnosis: 'Hypertensive Nephropathy', modality: 'Hemodialysis', access: 'AVF', start: '2018-04-30', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-50-9012345', risk: null },
+    { id: 'P010', name: 'Tariq Badr', age: 33, gender: 'M', diagnosis: 'FSGS', modality: 'Hemodialysis', access: 'AVF', start: '2025-01-10', status: 'Active', doctor: 'Dr. Rahman', phone: '+966-55-0123456', risk: null },
+  ],
+  dialysis_sessions: [
+    { id: 'S001', patient_id: 'P001', date: '2026-06-12', duration: '4h 00m', uf_volume: 2.8, pre_bp: '158/92', post_bp: '132/78', ktv: 1.35, complications: 'None', status: 'Completed', nurse: 'S. Malik' },
+    { id: 'S002', patient_id: 'P002', date: '2026-06-12', duration: '3h 45m', uf_volume: 3.2, pre_bp: '165/98', post_bp: '142/88', ktv: 1.18, complications: 'Hypotension episode', status: 'Completed', nurse: 'J. Okonkwo' },
+    { id: 'S003', patient_id: 'P003', date: '2026-06-12', duration: '4h 00m', uf_volume: 2.5, pre_bp: '148/88', post_bp: '128/72', ktv: 1.42, complications: 'None', status: 'In Progress', nurse: 'S. Malik' },
+    { id: 'S004', patient_id: 'P004', date: '2026-06-12', duration: '3h 30m', uf_volume: 2.1, pre_bp: '172/95', post_bp: '148/82', ktv: 1.28, complications: 'Cramps', status: 'In Progress', nurse: 'J. Okonkwo' },
+    { id: 'S005', patient_id: 'P005', date: '2026-06-12', duration: '4h 00m', uf_volume: 1.9, pre_bp: '136/84', post_bp: '118/70', ktv: 1.51, complications: 'None', status: 'Scheduled', nurse: 'S. Malik' },
+    { id: 'S006', patient_id: 'P006', date: '2026-06-11', duration: '4h 00m', uf_volume: 3.5, pre_bp: '182/102', post_bp: '155/90', ktv: 1.22, complications: 'Hypotension, Nausea', status: 'Completed', nurse: 'J. Okonkwo' },
+    { id: 'S007', patient_id: 'P007', date: '2026-06-11', duration: '3h 45m', uf_volume: 2.7, pre_bp: '152/90', post_bp: '130/76', ktv: 1.38, complications: 'None', status: 'Completed', nurse: 'S. Malik' },
+    { id: 'S008', patient_id: 'P008', date: '2026-06-10', duration: '4h 00m', uf_volume: 2.3, pre_bp: '145/88', post_bp: '125/72', ktv: 1.45, complications: 'None', status: 'Completed', nurse: 'J. Okonkwo' },
+    { id: 'S009', patient_id: 'P002', date: '2026-06-10', duration: '3h 00m', uf_volume: 0, pre_bp: '--', post_bp: '--', ktv: '--', complications: '--', status: 'Missed', nurse: '--' },
+    { id: 'S010', patient_id: 'P009', date: '2026-06-10', duration: '4h 00m', uf_volume: 2.9, pre_bp: '168/96', post_bp: '140/80', ktv: 1.30, complications: 'Hypotension', status: 'Completed', nurse: 'S. Malik' },
+  ],
+  lab_results: [
+    { id: 'L001', patient_id: 'P001', date: '2026-06-10', test: 'BMP', parameter: 'Potassium', value: 5.8, unit: 'mEq/L', ref_low: 3.5, ref_high: 5.0, notes: 'Elevated — restrict dietary K' },
+    { id: 'L002', patient_id: 'P001', date: '2026-06-10', test: 'CBC', parameter: 'Hemoglobin', value: 8.9, unit: 'g/dL', ref_low: 10.0, ref_high: 12.0, notes: 'Low — consider ESA therapy' },
+    { id: 'L003', patient_id: 'P002', date: '2026-06-08', test: 'BMP', parameter: 'Potassium', value: 6.2, unit: 'mEq/L', ref_low: 3.5, ref_high: 5.0, notes: 'Critically elevated — urgent review' },
+    { id: 'L004', patient_id: 'P002', date: '2026-06-08', test: 'BMP', parameter: 'Bicarbonate', value: 16.4, unit: 'mEq/L', ref_low: 22.0, ref_high: 29.0, notes: 'Low — metabolic acidosis' },
+    { id: 'L005', patient_id: 'P003', date: '2026-06-09', test: 'Phosphorus', parameter: 'Phosphorus', value: 7.2, unit: 'mg/dL', ref_low: 2.5, ref_high: 5.5, notes: 'High — adjust phosphate binders' },
+    { id: 'L006', patient_id: 'P004', date: '2026-06-07', test: 'PTH', parameter: 'iPTH', value: 820, unit: 'pg/mL', ref_low: 150, ref_high: 600, notes: 'Elevated secondary hyperparathyroidism' },
+    { id: 'L007', patient_id: 'P005', date: '2026-06-11', test: 'CBC', parameter: 'Hemoglobin', value: 11.2, unit: 'g/dL', ref_low: 10.0, ref_high: 12.0, notes: 'Within target range' },
+    { id: 'L008', patient_id: 'P006', date: '2026-06-06', test: 'Iron', parameter: 'Ferritin', value: 42, unit: 'ng/mL', ref_low: 200, ref_high: 800, notes: 'Low — IV iron supplementation needed' },
+    { id: 'L009', patient_id: 'P007', date: '2026-06-10', test: 'BMP', parameter: 'Potassium', value: 4.8, unit: 'mEq/L', ref_low: 3.5, ref_high: 5.0, notes: 'Normal' },
+    { id: 'L010', patient_id: 'P009', date: '2026-06-05', test: 'CBC', parameter: 'Hemoglobin', value: 7.8, unit: 'g/dL', ref_low: 10.0, ref_high: 12.0, notes: 'Critically low — urgent ESA dose increase' },
+  ],
+  medications: [
+    { id: 'M001', patient_id: 'P001', drug: 'Erythropoietin (EPO)', dose: '4000 IU', freq: 'TIW (per session)', route: 'IV', prescriber: 'Dr. Rahman', start: '2022-04-01', status: 'Active', flag: false },
+    { id: 'M002', patient_id: 'P001', drug: 'Calcium Carbonate', dose: '500 mg', freq: 'TID with meals', route: 'PO', prescriber: 'Dr. Rahman', start: '2022-04-01', status: 'Active', flag: false },
+    { id: 'M003', patient_id: 'P002', drug: 'Insulin Glargine', dose: '20 units', freq: 'Once daily', route: 'SC', prescriber: 'Dr. Rahman', start: '2021-08-01', status: 'Active', flag: true },
+    { id: 'M004', patient_id: 'P002', drug: 'Carvedilol', dose: '12.5 mg', freq: 'BID', route: 'PO', prescriber: 'Dr. Rahman', start: '2021-08-01', status: 'Active', flag: false },
+    { id: 'M005', patient_id: 'P003', drug: 'Sevelamer', dose: '800 mg', freq: 'TID with meals', route: 'PO', prescriber: 'Dr. Rahman', start: '2023-02-01', status: 'Active', flag: false },
+    { id: 'M006', patient_id: 'P004', drug: 'Cinacalcet', dose: '30 mg', freq: 'Once daily', route: 'PO', prescriber: 'Dr. Rahman', start: '2021-01-15', status: 'Active', flag: false },
+    { id: 'M007', patient_id: 'P005', drug: 'Hydroxychloroquine', dose: '200 mg', freq: 'BID', route: 'PO', prescriber: 'Dr. Rahman', start: '2024-03-10', status: 'Active', flag: true },
+    { id: 'M008', patient_id: 'P006', drug: 'Iron Sucrose', dose: '200 mg', freq: 'Per session x5', route: 'IV', prescriber: 'Dr. Rahman', start: '2026-05-20', status: 'Active', flag: false },
+    { id: 'M009', patient_id: 'P007', drug: 'Amlodipine', dose: '5 mg', freq: 'Once daily', route: 'PO', prescriber: 'Dr. Rahman', start: '2022-09-01', status: 'Active', flag: false },
+    { id: 'M010', patient_id: 'P009', drug: 'Darbepoetin Alfa', dose: '60 mcg', freq: 'Q2W', route: 'SC', prescriber: 'Dr. Rahman', start: '2018-06-01', status: 'Active', flag: false },
+  ],
+  ai_predictions: [
+    { patient_id: 'P001', risk_score: 74, risk_level: 'High', factors: ['Low hemoglobin (8.9 g/dL)', 'Elevated potassium (5.8 mEq/L)'], recommendations: ['Increase EPO dose', 'Dietary potassium restriction'], calculated: '2026-06-12' },
+    { patient_id: 'P002', risk_score: 88, risk_level: 'Critical', factors: ['Critically elevated K (6.2 mEq/L)', 'Repeated hypotension', 'Missed session', 'Metabolic acidosis'], recommendations: ['Urgent cardiology consult', 'Modify dialysate potassium', 'Repeat labs in 24h', 'Review medication interactions'], calculated: '2026-06-12' },
+    { patient_id: 'P003', risk_score: 55, risk_level: 'Medium', factors: ['Elevated phosphorus (7.2 mg/dL)'], recommendations: ['Adjust phosphate binder dose', 'Dietary phosphorus restriction'], calculated: '2026-06-11' },
+    { patient_id: 'P004', risk_score: 61, risk_level: 'Medium', factors: ['Elevated PTH (820 pg/mL)', 'Advanced age (71)'], recommendations: ['Consider parathyroidectomy consult', 'Optimize Cinacalcet dose'], calculated: '2026-06-10' },
+    { patient_id: 'P005', risk_score: 32, risk_level: 'Low', factors: [], recommendations: ['Continue current management', 'Routine monitoring'], calculated: '2026-06-11' },
+    { patient_id: 'P006', risk_score: 79, risk_level: 'High', factors: ['Repeated hypotension', 'Low ferritin (42 ng/mL)', 'Uncontrolled hypertension'], recommendations: ['IV iron loading course', 'Review antihypertensive', 'Reduce UF rate'], calculated: '2026-06-11' },
+    { patient_id: 'P007', risk_score: 28, risk_level: 'Low', factors: [], recommendations: ['Routine monitoring'], calculated: '2026-06-10' },
+    { patient_id: 'P008', risk_score: 34, risk_level: 'Low', factors: [], recommendations: ['Routine monitoring'], calculated: '2026-06-10' },
+    { patient_id: 'P009', risk_score: 83, risk_level: 'Critical', factors: ['Critically low hemoglobin (7.8 g/dL)', 'Advanced age (76)', 'Repeated hypotension'], recommendations: ['Urgent ESA dose escalation', 'Consider blood transfusion', 'Increase monitoring frequency', 'Cardiology referral'], calculated: '2026-06-10' },
+    { patient_id: 'P010', risk_score: 22, risk_level: 'Low', factors: [], recommendations: ['Routine monitoring'], calculated: '2026-06-10' },
+  ],
+  alerts: [
+    { id: 'A001', severity: 'critical', patient_id: 'P002', title: 'Critical Hyperkalemia', desc: 'Ahmed Khalid K+ = 6.2 mEq/L — immediate cardiac monitoring required', type: 'Lab', status: 'New', time: '2026-06-12 08:30', assignee: 'Dr. Rahman' },
+    { id: 'A002', severity: 'critical', patient_id: 'P009', title: 'Severe Anemia', desc: 'Hana Youssef Hgb = 7.8 g/dL — symptomatic, urgent intervention needed', type: 'Lab', status: 'Under Review', time: '2026-06-10 14:15', assignee: 'Dr. Rahman' },
+    { id: 'A003', severity: 'critical', patient_id: 'P002', title: 'Missed Dialysis Session', desc: 'Ahmed Khalid missed scheduled session on June 10 — high potassium baseline', type: 'Adherence', status: 'New', time: '2026-06-10 16:00', assignee: 'Nurse Malik' },
+    { id: 'A004', severity: 'high', patient_id: 'P001', title: 'Low Hemoglobin', desc: 'Fatima Al-Sayed Hgb = 8.9 g/dL — below target range, ESA review needed', type: 'Lab', status: 'New', time: '2026-06-10 09:00', assignee: 'Dr. Rahman' },
+    { id: 'A005', severity: 'high', patient_id: 'P006', title: 'Repeated Intradialytic Hypotension', desc: 'Khalid Mansour — 3 hypotension episodes in last 2 sessions', type: 'Session', status: 'Under Review', time: '2026-06-11 15:30', assignee: 'Dr. Rahman' },
+    { id: 'A006', severity: 'medium', patient_id: 'P003', title: 'Hyperphosphatemia', desc: 'Nour Ibrahim Phosphorus = 7.2 mg/dL — phosphate binder adjustment needed', type: 'Lab', status: 'New', time: '2026-06-09 11:00', assignee: 'Dr. Rahman' },
+    { id: 'A007', severity: 'low', patient_id: 'P004', title: 'Suboptimal Kt/V', desc: 'Mohammad Hassan Kt/V = 1.05 in last session — adequacy review recommended', type: 'Adequacy', status: 'Closed', time: '2026-06-08 10:00', assignee: 'Nurse Okonkwo' },
+  ],
+  doctor_notes: [
+    { patient_id: 'P001', note: 'Increase EPO dose to 6000 IU per session. Recheck Hgb in 4 weeks. Refer to dietitian for potassium restriction education.', date: '2026-06-12', doctor: 'Dr. Rahman' },
+    { patient_id: 'P002', note: 'URGENT: Modify dialysate K to 2.0 mEq/L. Cardiology consult requested. Discuss medication adherence. Repeat BMP tomorrow morning.', date: '2026-06-12', doctor: 'Dr. Rahman' },
+    { patient_id: 'P003', note: 'Increase Sevelamer to 1600 mg TID. Dietitian referral for phosphorus restriction. Recheck in 2 weeks.', date: '2026-06-11', doctor: 'Dr. Rahman' },
+    { patient_id: 'P009', note: 'Critical anemia — escalate Darbepoetin to 100 mcg Q2W. Consider blood transfusion if Hgb does not improve within 1 week. Reduce UF rate to minimize hemodynamic stress.', date: '2026-06-11', doctor: 'Dr. Rahman' },
+  ],
+};
+
+// ============================================================
+// RULE-BASED RISK ENGINE
+// ============================================================
+function ruleBasedRiskScore(params) {
+  let score = 0;
+  const factors = [];
+  const recs = [];
+
+  // Age factor
+  if (params.age >= 70) { score += 15; factors.push('Advanced age (≥70)'); }
+  else if (params.age >= 60) { score += 8; }
+
+  // Hemoglobin
+  if (params.hgb !== null) {
+    if (params.hgb < 8) { score += 20; factors.push('Critically low hemoglobin'); recs.push('Urgent ESA dose escalation or transfusion'); }
+    else if (params.hgb < 10) { score += 12; factors.push('Low hemoglobin'); recs.push('Review ESA therapy and iron status'); }
+    else if (params.hgb < 10.5) { score += 5; }
+  }
+
+  // Potassium
+  if (params.k !== null) {
+    if (params.k > 6.0) { score += 25; factors.push('Critical hyperkalemia'); recs.push('Urgent cardiac monitoring, modify dialysate K'); }
+    else if (params.k > 5.5) { score += 15; factors.push('Elevated potassium'); recs.push('Dietary K restriction, review medications'); }
+    else if (params.k > 5.0) { score += 7; factors.push('Borderline potassium'); }
+  }
+
+  // Systolic BP
+  if (params.sbp !== null) {
+    if (params.sbp > 180) { score += 15; factors.push('Severe hypertension'); recs.push('Review antihypertensive regimen urgently'); }
+    else if (params.sbp > 160) { score += 8; factors.push('Uncontrolled hypertension'); recs.push('Optimize blood pressure management'); }
+    else if (params.sbp < 100) { score += 12; factors.push('Hypotension'); recs.push('Reduce UF rate, review antihypertensives'); }
+  }
+
+  // Kt/V
+  if (params.ktv !== null) {
+    if (params.ktv < 1.0) { score += 20; factors.push('Inadequate dialysis (Kt/V < 1.0)'); recs.push('Increase session duration or frequency'); }
+    else if (params.ktv < 1.2) { score += 10; factors.push('Suboptimal Kt/V'); recs.push('Optimize dialysis prescription'); }
+  }
+
+  // Phosphorus
+  if (params.phos !== null) {
+    if (params.phos > 7) { score += 10; factors.push('Severe hyperphosphatemia'); recs.push('Increase phosphate binder dose, dietary restriction'); }
+    else if (params.phos > 5.5) { score += 5; factors.push('Elevated phosphorus'); recs.push('Adjust phosphate binder'); }
+  }
+
+  // Missed sessions
+  if (params.missed >= 3) { score += 15; factors.push('Frequent missed sessions'); recs.push('Social work referral, patient education'); }
+  else if (params.missed >= 1) { score += 7; factors.push('Missed sessions'); recs.push('Address barriers to attendance'); }
+
+  // Comorbidities
+  if (params.hypotension) { score += 12; factors.push('Repeated hypotension'); recs.push('Reduce UF rate, adjust dry weight'); }
+  if (params.diabetes) { score += 8; factors.push('Diabetes mellitus'); recs.push('Monitor blood glucose during sessions'); }
+  if (params.cardiac) { score += 12; factors.push('Cardiac disease'); recs.push('Cardiology co-management, ECG monitoring'); }
+
+  score = Math.min(100, score);
+  let level = 'Low';
+  if (score >= 80) level = 'Critical';
+  else if (score >= 60) level = 'High';
+  else if (score >= 35) level = 'Medium';
+
+  if (recs.length === 0) recs.push('Continue routine monitoring', 'Maintain current management plan');
+
+  return { risk_score: score, risk_level: level, risk_factors: factors, recommendations: recs };
+}
+
+// Pre-calculate patient risk scores
+DB.patients.forEach(p => {
+  const pred = DB.ai_predictions.find(x => x.patient_id === p.id);
+  if (pred) { p.risk = pred; p.risk_level = pred.risk_level; p.risk_score = pred.risk_score; }
+  else { p.risk_level = 'Low'; p.risk_score = 20; }
+});
+
+// ============================================================
+// XGBOOST API INTEGRATION
+// ============================================================
+const XGBOOST_API = 'http://localhost:8000';
+let _xgbConnected = false;
+
+async function checkXGBoostAPI() {
+  try {
+    const res = await fetch(`${XGBOOST_API}/`, { signal: AbortSignal.timeout(2000) });
+    _xgbConnected = res.ok;
+  } catch { _xgbConnected = false; }
+  updateAPIStatusBadge();
+}
+
+function updateAPIStatusBadge() {
+  document.querySelectorAll('.xgb-status').forEach(el => {
+    el.innerHTML = _xgbConnected
+      ? `<span class="badge badge-success" style="font-size:10px;">⬤ XGBoost API Connected</span>`
+      : `<span class="badge badge-muted" style="font-size:10px;">⬤ API Offline — using rule engine</span>`;
+  });
+}
+
+async function predictXGBoost(patient) {
+  // Build payload from patient data
+  const labs = DB.labs?.filter(l => l.patient_id === patient.id) || [];
+  const getLabVal = name => labs.find(l => l.name === name)?.value ?? null;
+  const sessions = DB.sessions?.filter(s => s.patient_id === patient.id) || [];
+  const missedCount = sessions.filter(s => s.status === 'Missed').length;
+  const lastKtv = parseFloat(sessions.filter(s => s.ktv && s.ktv !== '--').slice(-1)[0]?.ktv || 0);
+
+  const payload = {
+    patient_id: patient.id,
+    patient_name: patient.name,
+    age: patient.age,
+    diabetes: patient.diagnosis?.toLowerCase().includes('diabet') ? 1 : 0,
+    systolic_bp: patient.bp_systolic || 140,
+    hemoglobin: getLabVal('Hemoglobin') || 10.5,
+    ktv: lastKtv || 1.2,
+    sessions_missed: missedCount,
+    potassium: getLabVal('Potassium') || 4.5,
+    albumin: getLabVal('Albumin') || 3.8,
+  };
+
+  if (!_xgbConnected) {
+    // Fallback: use rule-based engine
+    return ruleBasedRiskScore({
+      age: payload.age, hgb: payload.hemoglobin, k: payload.potassium,
+      sbp: payload.systolic_bp, ktv: payload.ktv, phos: null,
+      missed: payload.sessions_missed, hypotension: false,
+      diabetes: payload.diabetes, cardiac: false,
+    });
+  }
+
+  try {
+    const res = await fetch(`${XGBOOST_API}/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    return {
+      risk_score: data.risk_score,
+      risk_level: data.risk_level,
+      risk_factors: data.risk_factors,
+      recommendations: data.recommendations,
+      feature_importances: data.feature_importances,
+      calculated: data.calculated,
+      source: 'xgboost',
+    };
+  } catch {
+    // Graceful fallback
+    return ruleBasedRiskScore({
+      age: payload.age, hgb: payload.hemoglobin, k: payload.potassium,
+      sbp: payload.systolic_bp, ktv: payload.ktv, phos: null,
+      missed: payload.sessions_missed, hypotension: false,
+      diabetes: payload.diabetes, cardiac: false,
+    });
+  }
+}
+
+async function runXGBoostForPatient(pid) {
+  const p = getPatient(pid);
+  if (!p) return;
+  const result = await predictXGBoost(p);
+  result.patient_id = pid;
+  result.calculated = result.calculated || new Date().toLocaleString();
+  // Merge into DB predictions
+  const idx = DB.ai_predictions.findIndex(x => x.patient_id === pid);
+  if (idx >= 0) Object.assign(DB.ai_predictions[idx], result);
+  else DB.ai_predictions.push(result);
+  p.risk_level = result.risk_level;
+  p.risk_score = result.risk_score;
+  return result;
+}
+
+// Check API on load
+checkXGBoostAPI();
+
+// Handle Run XGBoost button in patient profile
+async function handleRunXGBoost() {
+  const btn = document.getElementById('btn-run-xgb');
+  if (!btn) return;
+  const pid = btn.dataset.pid;
+  if (!pid) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i data-lucide="loader" style="width:12px;height:12px; animation:spin 1s linear infinite;"></i> Running…';
+  lucide.createIcons();
+
+  const result = await runXGBoostForPatient(pid);
+
+  btn.disabled = false;
+  btn.innerHTML = '<i data-lucide="zap" style="width:12px;height:12px;"></i> Run XGBoost';
+  lucide.createIcons();
+
+  // Update source label
+  const srcLabel = document.getElementById('cp-risk-source');
+  if (srcLabel) srcLabel.textContent = result?.source === 'xgboost' ? '⚡ XGBoost prediction' : 'Rule-based fallback';
+
+  const engineLabel = document.getElementById('cp-risk-engine-label');
+  if (engineLabel) engineLabel.textContent = result?.source === 'xgboost' ? 'XGBoost ML Engine' : 'Rule-based engine (API offline)';
+
+  // Render feature importances if available
+  if (result?.feature_importances) {
+    const card = document.getElementById('cp-feature-importance-card');
+    const container = document.getElementById('cp-feature-importances');
+    if (card && container) {
+      card.style.display = '';
+      const entries = Object.entries(result.feature_importances)
+        .sort((a, b) => b[1] - a[1]);
+      const maxVal = entries[0]?.[1] || 1;
+      const labels = {
+        age:'Age', diabetes:'Diabetes', systolic_bp:'Systolic BP',
+        hemoglobin:'Hemoglobin', ktv:'Kt/V Adequacy',
+        sessions_missed:'Missed Sessions', potassium:'Potassium', albumin:'Albumin',
+      };
+      container.innerHTML = entries.map(([key, val]) => {
+        const pct = Math.round((val / maxVal) * 100);
+        return `<div style="display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--color-border);">
+          <div style="width:130px; font-size:12px; font-weight:500; color:var(--color-text); flex-shrink:0;">${labels[key] || key}</div>
+          <div style="flex:1; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+            <div style="width:${pct}%; height:100%; background:linear-gradient(90deg,#2563eb,#7c3aed); border-radius:4px;"></div>
+          </div>
+          <div style="width:42px; text-align:right; font-size:12px; font-weight:700; color:#7c3aed;">${(val * 100).toFixed(1)}%</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Re-render AI tab content
+  openClinicalProfile(pid);
+}
+
+// Add CSS for spin animation
+const style = document.createElement('style');
+style.textContent = `@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`;
+document.head.appendChild(style);
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const navItems = document.querySelectorAll('.nav-item');
+
+function navigate(view) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const active = document.querySelector(`[data-view="${view}"]`);
+  if (active) active.classList.add('active');
+  const viewEl = document.getElementById(`view-${view}`);
+  if (viewEl) viewEl.classList.add('active');
+  const titles = { dashboard:'Dashboard', patients:'Patients', sessions:'Dialysis Sessions', labs:'Lab Results', medications:'Medications', risk:'Risk Engine', insights:'AI Insights', alerts:'Alerts Center', reports:'Reports & Analytics', portal:'Patient Portal', monitoring:'Live Monitoring', profile:'Clinical Profile' };
+  document.getElementById('page-title').textContent = titles[view] || view;
+  if (view === 'monitoring') renderMonitoring();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getPatient(id) { return DB.patients.find(p => p.id === id); }
+
+function riskBadge(level) {
+  const map = { Critical: 'badge-danger', High: 'badge-warning', Medium: 'badge-info', Low: 'badge-success' };
+  return `<span class="badge ${map[level] || 'badge-muted'}">${level}</span>`;
+}
+
+function statusBadge(s) {
+  const map = { Completed: 'badge-success', 'In Progress': 'badge-info', Scheduled: 'badge-muted', Missed: 'badge-danger', Active: 'badge-success', Inactive: 'badge-muted', New: 'badge-danger', 'Under Review': 'badge-warning', Closed: 'badge-muted' };
+  return `<span class="badge ${map[s] || 'badge-muted'}">${s}</span>`;
+}
+
+function labStatus(row) {
+  if (row.value > row.ref_high * 1.2 || row.value < row.ref_low * 0.8) return `<span class="badge badge-danger">Critical</span>`;
+  if (row.value > row.ref_high || row.value < row.ref_low) return `<span class="badge badge-warning">Abnormal</span>`;
+  return `<span class="badge badge-success">Normal</span>`;
+}
+
+// ============================================================
+// PATIENTS TABLE
+// ============================================================
+function renderPatients(list) {
+  const tbody = document.getElementById('patients-tbody');
+  tbody.innerHTML = list.map(p => `
+    <tr>
+      <td><div style="font-weight:600;">${p.name}</div><div style="font-size:11px; color:var(--color-muted);">${p.gender}, ${p.modality}</div></td>
+      <td style="font-family:monospace; font-size:12px;">${p.id}</td>
+      <td>${p.age}</td>
+      <td style="max-width:160px;">${p.diagnosis}</td>
+      <td>${riskBadge(p.risk_level)}</td>
+      <td style="font-size:12px;">${DB.dialysis_sessions.filter(s=>s.patient_id===p.id && s.status==='Completed').slice(-1)[0]?.date || '—'}</td>
+      <td style="font-size:12px;">${DB.dialysis_sessions.filter(s=>s.patient_id===p.id && s.status==='Scheduled').slice(-1)[0]?.date || 'TBD'}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td>
+        <button class="btn btn-sm" onclick="showPatientPortal('${p.id}')">Portal</button>
+        <button class="btn btn-sm" style="margin-left:4px;" onclick="viewRisk('${p.id}')">Risk</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterPatients() {
+  const q = document.getElementById('patient-search').value.toLowerCase();
+  const risk = document.getElementById('patient-risk-filter').value;
+  const status = document.getElementById('patient-status-filter').value;
+  const filtered = DB.patients.filter(p =>
+    (!q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.diagnosis.toLowerCase().includes(q)) &&
+    (!risk || p.risk_level === risk) &&
+    (!status || p.status === status)
+  );
+  renderPatients(filtered);
+}
+
+// ============================================================
+// SESSIONS TABLE
+// ============================================================
+function renderSessions(list) {
+  document.getElementById('sessions-tbody').innerHTML = list.map(s => {
+    const p = getPatient(s.patient_id);
+    const compBadge = s.complications && s.complications !== 'None' && s.complications !== '--'
+      ? `<span class="badge badge-warning">${s.complications}</span>`
+      : `<span style="color:var(--color-muted); font-size:12px;">None</span>`;
+    return `<tr>
+      <td style="font-size:12px;">${s.date}</td>
+      <td><div style="font-weight:600; font-size:13px;">${p?.name || s.patient_id}</div></td>
+      <td>${s.duration}</td>
+      <td>${s.uf_volume}</td>
+      <td style="font-family:monospace; font-size:12px;">${s.pre_bp}</td>
+      <td style="font-family:monospace; font-size:12px;">${s.post_bp}</td>
+      <td style="font-weight:600; color:${parseFloat(s.ktv)<1.2&&s.ktv!=='--'?'var(--color-warning)':'var(--color-success)'};">${s.ktv}</td>
+      <td>${compBadge}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td style="font-size:12px;">${s.nurse}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterSessions() {
+  const d = document.getElementById('session-date-filter').value;
+  const st = document.getElementById('session-status-filter').value;
+  const filtered = DB.dialysis_sessions.filter(s => (!d || s.date === d) && (!st || s.status === st));
+  renderSessions(filtered);
+}
+
+// ============================================================
+// LABS TABLE
+// ============================================================
+function renderLabs(list) {
+  document.getElementById('labs-tbody').innerHTML = list.map(l => {
+    const p = getPatient(l.patient_id);
+    const isHigh = l.value > l.ref_high;
+    const isLow = l.value < l.ref_low;
+    const valColor = isHigh || isLow ? (Math.abs(l.value - (isHigh ? l.ref_high : l.ref_low)) > 1 ? 'var(--color-danger)' : 'var(--color-warning)') : 'var(--color-success)';
+    return `<tr>
+      <td style="font-size:12px;">${l.date}</td>
+      <td style="font-weight:600;">${p?.name || l.patient_id}</td>
+      <td>${l.test}</td>
+      <td style="font-weight:700; color:${valColor};">${l.value} ${l.unit}</td>
+      <td style="font-size:12px; color:var(--color-muted);">${l.ref_low} – ${l.ref_high} ${l.unit}</td>
+      <td>${labStatus(l)}</td>
+      <td style="font-size:12px; max-width:180px; color:var(--color-muted);">${l.notes}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterLabs() {
+  const q = document.getElementById('lab-search').value.toLowerCase();
+  const t = document.getElementById('lab-type-filter').value;
+  const filtered = DB.lab_results.filter(l => {
+    const p = getPatient(l.patient_id);
+    return (!q || p?.name.toLowerCase().includes(q) || l.parameter.toLowerCase().includes(q)) && (!t || l.test === t || l.test.includes(t));
+  });
+  renderLabs(filtered);
+}
+
+// ============================================================
+// MEDICATIONS TABLE
+// ============================================================
+function renderMeds() {
+  document.getElementById('meds-tbody').innerHTML = DB.medications.map(m => {
+    const p = getPatient(m.patient_id);
+    return `<tr>
+      <td style="font-weight:600;">${p?.name || m.patient_id}</td>
+      <td>${m.drug}</td>
+      <td style="font-family:monospace; font-size:12px;">${m.dose}</td>
+      <td>${m.freq}</td>
+      <td><span class="badge badge-muted">${m.route}</span></td>
+      <td style="font-size:12px;">${m.prescriber}</td>
+      <td style="font-size:12px;">${m.start}</td>
+      <td>${statusBadge(m.status)}</td>
+      <td>${m.flag ? '<span class="badge badge-warning">⚠ Review</span>' : '<span class="badge badge-success">Clear</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// RISK ENGINE
+// ============================================================
+function populateRiskPatientSelect() {
+  const sel = document.getElementById('risk-patient-select');
+  DB.patients.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id; o.textContent = `${p.id} — ${p.name}`;
+    sel.appendChild(o);
+  });
+}
+
+function viewRisk(pid) {
+  navigate('risk');
+  document.getElementById('risk-patient-select').value = pid;
+  const pred = DB.ai_predictions.find(x => x.patient_id === pid);
+  if (pred) { showRiskResult(pred.risk_score, pred.risk_level, pred.risk_factors, pred.recommendations); }
+}
+
+async function calculateRisk() {
+  const pid = document.getElementById('risk-patient-select').value;
+  const age = parseFloat(document.getElementById('r-age').value) || null;
+  const hgb = parseFloat(document.getElementById('r-hgb').value) || null;
+  const k = parseFloat(document.getElementById('r-k').value) || null;
+  const sbp = parseFloat(document.getElementById('r-sbp').value) || null;
+  const ktv = parseFloat(document.getElementById('r-ktv').value) || null;
+  const phos = parseFloat(document.getElementById('r-phos').value) || null;
+  const missed = parseInt(document.getElementById('r-missed').value) || 0;
+  const hypotension = document.getElementById('r-hypotension').checked;
+  const diabetes = document.getElementById('r-diabetes').checked;
+  const cardiac = document.getElementById('r-cardiac').checked;
+
+  if (!age && !hgb && !k && !pid) return;
+
+  // Show loading
+  const btn = document.querySelector('button[onclick="calculateRisk()"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i> Running XGBoost…'; lucide.createIcons(); }
+
+  const patient = pid ? DB.patients.find(p => p.id === pid) : null;
+  const payload = {
+    patient_id: pid || 'manual',
+    patient_name: patient?.name || 'Manual Entry',
+    age: age || patient?.age || 50,
+    diabetes: (diabetes || patient?.diagnosis?.toLowerCase().includes('diabet')) ? 1 : 0,
+    systolic_bp: sbp || 140,
+    hemoglobin: hgb || 10.5,
+    ktv: ktv || 1.2,
+    sessions_missed: missed,
+    potassium: k || 4.5,
+    albumin: 3.8,
+  };
+
+  let result;
+  if (_xgbConnected) {
+    try {
+      const res = await fetch(`${XGBOOST_API}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(5000),
+      });
+      const data = await res.json();
+      result = { risk_score: data.risk_score, risk_level: data.risk_level, risk_factors: data.risk_factors, recommendations: data.recommendations, feature_importances: data.feature_importances, source: 'xgboost' };
+    } catch(e) { result = null; }
+  }
+
+  if (!result) {
+    result = ruleBasedRiskScore({ age: payload.age, hgb: payload.hemoglobin, k: payload.potassium, sbp: payload.systolic_bp, ktv: payload.ktv, phos, missed, hypotension, diabetes: !!payload.diabetes, cardiac });
+    result.source = 'rule-based';
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="zap" style="width:14px;height:14px;"></i> Calculate Risk'; lucide.createIcons(); }
+
+  showRiskResult(result.risk_score, result.risk_level, result.risk_factors, result.recommendations, result.feature_importances, result.source);
+}
+
+function showRiskResult(score, level, factors, recs, featureImportances, source) {
+  const levelClass = level === 'Critical' || level === 'High' ? 'risk-high' : level === 'Medium' ? 'risk-medium' : 'risk-low';
+  const el = document.getElementById('risk-result');
+  const sourceLabel = source === 'xgboost'
+    ? '<span style="font-size:10px;background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:100px;font-weight:600;">⚡ XGBoost</span>'
+    : '<span style="font-size:10px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:100px;font-weight:600;">Rule-based</span>';
+
+  const featureHTML = featureImportances ? (() => {
+    const labels = { age:'Age', diabetes:'Diabetes', systolic_bp:'Systolic BP', hemoglobin:'Hemoglobin', ktv:'Kt/V', sessions_missed:'Missed Sessions', potassium:'Potassium', albumin:'Albumin' };
+    const entries = Object.entries(featureImportances).sort((a,b)=>b[1]-a[1]);
+    const maxVal = entries[0]?.[1] || 1;
+    return `<div style="width:100%;text-align:left;margin-top:14px;">
+      <div style="font-weight:600;font-size:12px;margin-bottom:8px;">Feature Importances</div>
+      ${entries.map(([k,v])=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;">
+        <div style="width:110px;font-size:11px;color:var(--color-text);flex-shrink:0;">${labels[k]||k}</div>
+        <div style="flex:1;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+          <div style="width:${Math.round(v/maxVal*100)}%;height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed);border-radius:4px;"></div>
+        </div>
+        <div style="width:36px;text-align:right;font-size:11px;font-weight:700;color:#7c3aed;">${(v*100).toFixed(1)}%</div>
+      </div>`).join('')}
+    </div>`;
+  })() : '';
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">${sourceLabel}</div>
+    <div class="risk-score-circle ${levelClass}">
+      <div class="risk-score-num">${score}</div>
+      <div class="risk-score-lbl">/100</div>
+    </div>
+    <div style="font-size:18px; font-weight:700; margin:12px 0 4px; color:${level==='Critical'?'var(--color-danger)':level==='High'?'var(--color-warning)':level==='Medium'?'#3b82f6':'var(--color-success)'};">${level} Risk</div>
+    <div style="width:100%; margin:8px 0 16px;">
+      <div class="risk-bar"></div>
+      <div class="risk-bar-track"><div class="risk-needle" style="left:${score}%;"></div></div>
+    </div>
+    ${factors.length ? `<div style="width:100%; text-align:left; margin-bottom:12px;">
+      <div style="font-weight:600; font-size:12px; margin-bottom:6px;">Risk Factors</div>
+      ${factors.map(f=>`<div style="font-size:12px; padding:4px 0; display:flex; gap:6px; align-items:center;"><span style="color:var(--color-danger);">●</span> ${f}</div>`).join('')}
+    </div>` : ''}
+    <div style="width:100%; text-align:left;">
+      <div style="font-weight:600; font-size:12px; margin-bottom:6px;">Recommendations</div>
+      ${recs.map(r=>`<div style="font-size:12px; padding:4px 0; display:flex; gap:6px; align-items:flex-start;"><span style="color:var(--color-success); flex-shrink:0;">✓</span> ${r}</div>`).join('')}
+    </div>
+    ${featureHTML}`;
+}
+
+function renderRiskOverview() {
+  document.getElementById('risk-tbody').innerHTML = DB.patients.map(p => {
+    const pred = DB.ai_predictions.find(x => x.patient_id === p.id);
+    const score = pred?.risk_score || p.risk_score || 20;
+    const level = pred?.risk_level || p.risk_level || 'Low';
+    const factors = pred?.risk_factors || [];
+    const bar = `<div style="display:flex; align-items:center; gap:8px;">
+      <div style="width:80px; height:6px; background:#e5e7eb; border-radius:3px; overflow:hidden;">
+        <div style="width:${score}%; height:100%; background:${score>=80?'var(--color-danger)':score>=60?'var(--color-warning)':score>=35?'#3b82f6':'var(--color-success)'}; border-radius:3px;"></div>
+      </div>
+      <span style="font-weight:700; font-size:13px;">${score}</span>
+    </div>`;
+    return `<tr>
+      <td><div style="font-weight:600;">${p.name}</div><div style="font-size:11px; color:var(--color-muted);">${p.id}</div></td>
+      <td>${bar}</td>
+      <td>${riskBadge(level)}</td>
+      <td style="font-size:12px; color:var(--color-muted);">${factors.slice(0,2).join(', ') || 'No significant risk factors'}</td>
+      <td style="font-size:12px;">${pred?.calculated || '—'}</td>
+      <td><button class="btn btn-sm" onclick="viewRisk('${p.id}')">Details</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// AI INSIGHTS
+// ============================================================
+function renderInsights() {
+  const riskFactors = [
+    { icon: 'flask-conical', label: 'Elevated potassium (K+ > 5.5)', patients: 2, severity: 'critical' },
+    { icon: 'droplets',      label: 'Low hemoglobin (Hgb < 10 g/dL)', patients: 3, severity: 'high' },
+    { icon: 'trending-down', label: 'Repeated intradialytic hypotension', patients: 3, severity: 'high' },
+    { icon: 'pill',          label: 'Medication interaction flags', patients: 2, severity: 'medium' },
+    { icon: 'bar-chart-3',   label: 'Suboptimal Kt/V (< 1.2)', patients: 2, severity: 'medium' },
+    { icon: 'bone',          label: 'Hyperphosphatemia (Phos > 5.5)', patients: 2, severity: 'medium' },
+  ];
+  const actions = [
+    { icon: 'pill',           text: 'Review medication interactions for flagged patients', priority: 'Urgent' },
+    { icon: 'microscope',     text: 'Repeat laboratory tests for critical values', priority: 'Urgent' },
+    { icon: 'activity',       text: 'Increase monitoring frequency for high-risk patients', priority: 'High' },
+    { icon: 'settings-2',     text: 'Adjust dialysis plans for suboptimal Kt/V patients', priority: 'High' },
+    { icon: 'salad',          text: 'Dietitian referrals for hyperkalemia and hyperphosphatemia', priority: 'Medium' },
+    { icon: 'user-check',     text: 'Social work consult for patients with missed sessions', priority: 'Medium' },
+  ];
+
+  const severityMap = { critical: 'badge-danger', high: 'badge-warning', medium: 'badge-info' };
+  document.getElementById('risk-factors-list').innerHTML = riskFactors.map(f => `
+    <div class="insight-item">
+      <span class="insight-icon" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:var(--color-bg);flex-shrink:0;">
+        <i data-lucide="${f.icon}" style="width:14px;height:14px;color:var(--color-muted);"></i>
+      </span>
+      <div class="flex-1">
+        <div class="insight-value">${f.label}</div>
+        <div class="insight-label">${f.patients} patients affected</div>
+      </div>
+      <span class="badge ${severityMap[f.severity]}">${f.severity}</span>
+    </div>`).join('');
+
+  const prioMap = { Urgent: 'badge-danger', High: 'badge-warning', Medium: 'badge-info' };
+  document.getElementById('suggested-actions-list').innerHTML = actions.map(a => `
+    <div class="insight-item">
+      <span class="insight-icon" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:var(--color-bg);flex-shrink:0;">
+        <i data-lucide="${a.icon}" style="width:14px;height:14px;color:var(--color-muted);"></i>
+      </span>
+      <div class="flex-1"><div class="insight-value" style="font-weight:500;">${a.text}</div></div>
+      <span class="badge ${prioMap[a.priority]}">${a.priority}</span>
+    </div>`).join('');
+  lucide.createIcons();
+
+  const highRisk = DB.patients.filter(p => p.risk_score >= 60).sort((a,b)=>b.risk_score-a.risk_score);
+  document.getElementById('high-risk-patients-list').innerHTML = highRisk.map(p => `
+    <div class="flex items-center gap-12" style="padding:8px 0; border-bottom:1px solid var(--color-border);">
+      <div class="avatar" style="background:${p.risk_score>=80?'var(--color-danger)':'var(--color-warning)'};">${p.name.split(' ').map(x=>x[0]).join('').slice(0,2)}</div>
+      <div class="flex-1">
+        <div style="font-weight:600; font-size:13px;">${p.name}</div>
+        <div style="font-size:11px; color:var(--color-muted);">${p.id} · ${p.diagnosis.substring(0,30)}</div>
+      </div>
+      ${riskBadge(p.risk_level)}
+      <div style="font-weight:700; color:${p.risk_score>=80?'var(--color-danger)':'var(--color-warning)'}; font-size:14px;">${p.risk_score}</div>
+    </div>`).join('');
+}
+
+// ============================================================
+// ALERTS
+// ============================================================
+function renderAlerts(list) {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  DB.alerts.forEach(a => counts[a.severity]++);
+  document.getElementById('count-critical').textContent = counts.critical;
+  document.getElementById('count-high').textContent = counts.high;
+  document.getElementById('count-medium').textContent = counts.medium;
+  document.getElementById('count-low').textContent = counts.low;
+
+  const iconMap = {
+    critical: `<i data-lucide="circle-alert" style="width:18px;height:18px;color:var(--color-danger);"></i>`,
+    high:     `<i data-lucide="triangle-alert" style="width:18px;height:18px;color:var(--color-warning);"></i>`,
+    medium:   `<i data-lucide="info" style="width:18px;height:18px;color:#3b82f6;"></i>`,
+    low:      `<i data-lucide="lightbulb" style="width:18px;height:18px;color:var(--color-success);"></i>`,
+  };
+  document.getElementById('alerts-list').innerHTML = list.map(a => {
+    const p = getPatient(a.patient_id);
+    return `<div class="alert-item ${a.severity}">
+      <span class="alert-icon">${iconMap[a.severity]}</span>
+      <div class="alert-body">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+        <div class="alert-meta">Patient: ${p?.name || a.patient_id} · Type: ${a.type} · Assigned: ${a.assignee} · ${a.time}</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end; flex-shrink:0;">
+        ${statusBadge(a.status)}
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          ${a.status !== 'Closed' ? `<button class="btn btn-sm" onclick="updateAlertStatus('${a.id}','Closed')">Close</button>` : ''}
+          ${a.status === 'New' ? `<button class="btn btn-primary btn-sm" onclick="updateAlertStatus('${a.id}','Under Review')">Review</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function updateAlertStatus(id, status) {
+  const alert = DB.alerts.find(a => a.id === id);
+  if (alert) { alert.status = status; filterAlerts(); }
+}
+
+function filterAlerts() {
+  const q = document.getElementById('alert-search').value.toLowerCase();
+  const sev = document.getElementById('alert-severity-filter').value;
+  const st = document.getElementById('alert-status-filter').value;
+  const filtered = DB.alerts.filter(a => {
+    const p = getPatient(a.patient_id);
+    return (!q || a.title.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q) || p?.name.toLowerCase().includes(q)) &&
+      (!sev || a.severity === sev) && (!st || a.status === st);
+  });
+  renderAlerts(filtered);
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashAlerts() {
+  const recent = DB.alerts.filter(a => a.status !== 'Closed').slice(0, 4);
+  const iconMap = {
+    critical: `<i data-lucide="circle-alert" style="width:15px;height:15px;color:var(--color-danger);flex-shrink:0;margin-top:1px;"></i>`,
+    high:     `<i data-lucide="triangle-alert" style="width:15px;height:15px;color:var(--color-warning);flex-shrink:0;margin-top:1px;"></i>`,
+    medium:   `<i data-lucide="info" style="width:15px;height:15px;color:#3b82f6;flex-shrink:0;margin-top:1px;"></i>`,
+    low:      `<i data-lucide="lightbulb" style="width:15px;height:15px;color:var(--color-success);flex-shrink:0;margin-top:1px;"></i>`,
+  };
+  document.getElementById('dash-alerts').innerHTML = recent.map(a => `
+    <div style="display:flex; align-items:flex-start; gap:8px; padding:8px 0; border-bottom:1px solid var(--color-border);">
+      ${iconMap[a.severity]}
+      <div>
+        <div style="font-weight:600; font-size:13px;">${a.title}</div>
+        <div style="font-size:11px; color:var(--color-muted);">${a.time}</div>
+      </div>
+      ${statusBadge(a.status)}
+    </div>`).join('');
+  lucide.createIcons();
+}
+
+function renderDashSchedule() {
+  const today = DB.dialysis_sessions.filter(s => s.date === '2026-06-12');
+  document.getElementById('dash-schedule').innerHTML = today.map(s => {
+    const p = getPatient(s.patient_id);
+    const dotColor = s.status === 'Completed' ? 'var(--color-success)' : s.status === 'In Progress' ? '#3b82f6' : 'var(--color-muted)';
+    return `<div class="timeline-item">
+      <div class="timeline-dot" style="background:${dotColor};"></div>
+      <div style="flex:1;">
+        <div style="font-weight:600; font-size:13px;">${p?.name}</div>
+        <div style="font-size:11px; color:var(--color-muted);">${s.duration} · Nurse ${s.nurse}</div>
+      </div>
+      ${statusBadge(s.status)}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// PATIENT PORTAL
+// ============================================================
+function populatePortalSelect() {
+  const sel = document.getElementById('portal-patient-select');
+  DB.patients.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id; o.textContent = `${p.name} (${p.id})`;
+    sel.appendChild(o);
+  });
+}
+
+function showPatientPortal(pid) {
+  navigate('portal');
+  document.getElementById('portal-patient-select').value = pid;
+  loadPortal();
+}
+
+function loadPortal() {
+  const pid = document.getElementById('portal-patient-select').value;
+  if (!pid) {
+    document.getElementById('portal-content').style.display = 'none';
+    document.getElementById('portal-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('portal-content').style.display = 'block';
+  document.getElementById('portal-empty').style.display = 'none';
+
+  const p = getPatient(pid);
+  const pLabs = DB.lab_results.filter(l => l.patient_id === pid).slice(0, 4);
+  const pMeds = DB.medications.filter(m => m.patient_id === pid && m.status === 'Active');
+  const pSessions = DB.dialysis_sessions.filter(s => s.patient_id === pid);
+  const pNotes = DB.doctor_notes.find(n => n.patient_id === pid);
+  const nextSession = pSessions.find(s => s.status === 'Scheduled');
+  const lastSession = [...pSessions].filter(s=>s.status==='Completed').sort((a,b)=>b.date.localeCompare(a.date))[0];
+
+  // Appointments
+  document.getElementById('portal-appointments').innerHTML = nextSession
+    ? `<div style="background:var(--color-accent-light); border-radius:var(--radius); padding:12px; font-size:13px;">
+        <div style="font-weight:600; color:var(--color-accent);">Next Dialysis Session</div>
+        <div style="margin-top:4px;">📅 ${nextSession.date} · ⏱ ${nextSession.duration} (estimated)</div>
+        <div style="font-size:12px; color:var(--color-muted); margin-top:2px;">Nurse: ${nextSession.nurse}</div>
+      </div>`
+    : '<div style="color:var(--color-muted); font-size:13px;">No upcoming sessions scheduled.</div>';
+
+  // Medications
+  document.getElementById('portal-meds').innerHTML = pMeds.length
+    ? pMeds.map(m => `<div class="med-item"><div><div style="font-weight:600;">${m.drug}</div><div style="font-size:12px; color:var(--color-muted);">${m.dose} · ${m.freq}</div></div><span class="badge badge-${m.route==='IV'?'info':'muted'}">${m.route}</span></div>`).join('')
+    : '<div style="color:var(--color-muted); font-size:13px;">No medications on record.</div>';
+
+  // Labs
+  document.getElementById('portal-labs').innerHTML = pLabs.length
+    ? pLabs.map(l => {
+        const isAbnormal = l.value > l.ref_high || l.value < l.ref_low;
+        return `<div class="med-item">
+          <div><div style="font-weight:600;">${l.parameter}</div><div style="font-size:12px; color:var(--color-muted);">${l.date}</div></div>
+          <div style="text-align:right;"><span style="font-weight:700; color:${isAbnormal?'var(--color-warning)':'var(--color-success)'};">${l.value} ${l.unit}</span><div style="font-size:11px; color:var(--color-muted);">Ref: ${l.ref_low}–${l.ref_high}</div></div>
+        </div>`;}).join('')
+    : '<div style="color:var(--color-muted); font-size:13px;">No recent lab results.</div>';
+
+  // Last session
+  document.getElementById('portal-last-session').innerHTML = lastSession
+    ? `<div style="font-size:13px;">
+        <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--color-border);"><span style="color:var(--color-muted);">Date</span><span style="font-weight:600;">${lastSession.date}</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--color-border);"><span style="color:var(--color-muted);">Duration</span><span style="font-weight:600;">${lastSession.duration}</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--color-border);"><span style="color:var(--color-muted);">UF Volume</span><span style="font-weight:600;">${lastSession.uf_volume} L</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--color-border);"><span style="color:var(--color-muted);">Kt/V</span><span style="font-weight:600;">${lastSession.ktv}</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:var(--color-muted);">Complications</span><span style="font-weight:600;">${lastSession.complications}</span></div>
+      </div>`
+    : '<div style="color:var(--color-muted); font-size:13px;">No sessions on record.</div>';
+
+  // Doctor notes
+  document.getElementById('portal-notes').innerHTML = pNotes
+    ? `<div style="font-size:13px; background:var(--color-success-light); border-radius:var(--radius); padding:12px; border-left:3px solid var(--color-success);">
+        <div style="color:var(--color-muted); font-size:11px; margin-bottom:4px;">${pNotes.date} · ${pNotes.doctor}</div>
+        ${pNotes.note}</div>`
+    : '<div style="color:var(--color-muted); font-size:13px;">No notes from your doctor yet.</div>';
+
+  // Health tips
+  const tips = [
+    { icon: 'droplets',       text: 'Monitor your fluid intake — limit to prescribed amount between sessions.' },
+    { icon: 'salad',          text: 'Follow your renal diet: limit potassium, phosphorus, and sodium.' },
+    { icon: 'pill',           text: 'Take your medications on schedule, even on non-dialysis days.' },
+    { icon: 'scale',          text: 'Weigh yourself daily before and after dialysis to track fluid balance.' },
+    { icon: 'person-standing',text: 'Light exercise approved by your doctor can improve outcomes.' },
+  ];
+  document.getElementById('portal-tips').innerHTML = tips.map(t => `
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px;padding:8px 0;border-bottom:1px solid var(--color-border);">
+      <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:var(--color-accent-light);flex-shrink:0;">
+        <i data-lucide="${t.icon}" style="width:14px;height:14px;color:var(--color-accent);"></i>
+      </span>
+      <span>${t.text}</span>
+    </div>`).join('');
+  lucide.createIcons();
+}
+
+// ============================================================
+// REPORTS
+// ============================================================
+function switchReportTab(name, el) {
+  document.querySelectorAll('.report-tab').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`report-${name}`).style.display = 'block';
+  el.classList.add('active');
+  if (name === 'complications') renderCompReport();
+  if (name === 'trends') renderTrendsReport();
+  if (name === 'performance') renderPerfReport();
+  if (name === 'monthly') renderMonthly();
+}
+
+function renderCompReport() {
+  const compList = [
+    { name: 'Intradialytic Hypotension', count: 42, pct: 34 },
+    { name: 'Muscle Cramps', count: 28, pct: 23 },
+    { name: 'Nausea/Vomiting', count: 21, pct: 17 },
+    { name: 'Headache', count: 15, pct: 12 },
+    { name: 'Access Issues', count: 12, pct: 10 },
+    { name: 'Other', count: 5, pct: 4 },
+  ];
+  document.getElementById('comp-list').innerHTML = compList.map(c => `
+    <div style="padding:8px 0; border-bottom:1px solid var(--color-border);">
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:13px;">
+        <span>${c.name}</span><span style="font-weight:600;">${c.count} cases (${c.pct}%)</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="width:${c.pct}%; background:var(--color-accent);"></div></div>
+    </div>`).join('');
+
+  if (!window.chartCompType) {
+    const ctx = document.getElementById('chart-comp-type').getContext('2d');
+    window.chartCompType = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: compList.map(c=>c.name),
+        datasets: [{ data: compList.map(c=>c.count), backgroundColor: ['#dc2626','#d97706','#2563eb','#059669','#7c3aed','#6b7280'], borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 8 } } } }
+    });
+  }
+}
+
+function renderTrendsReport() {
+  if (!window.chartRiskTrends) {
+    const ctx = document.getElementById('chart-risk-trends').getContext('2d');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+    window.chartRiskTrends = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'Critical', data: [3,4,3,5,4,2], backgroundColor: '#dc2626' },
+          { label: 'High', data: [8,10,12,11,9,11], backgroundColor: '#d97706' },
+          { label: 'Medium', data: [22,20,21,23,25,24], backgroundColor: '#3b82f6' },
+          { label: 'Low', data: [109,108,106,103,104,105], backgroundColor: '#059669' },
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, scales: { x: { stacked: true }, y: { stacked: true } } }
+    });
+  }
+}
+
+function renderPerfReport() {
+  if (!window.chartPerf) {
+    const ctx = document.getElementById('chart-perf').getContext('2d');
+    window.chartPerf = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8'],
+        datasets: [{ label: 'Sessions', data: [118,122,115,124,119,126,121,128], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.4, fill: true, pointRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false, min: 100 } } }
+    });
+  }
+}
+
+function renderMonthly() {
+  document.getElementById('monthly-narrative').innerHTML = `
+    <p style="margin-bottom:12px;">During <strong>June 2026</strong>, the dialysis unit managed <strong>142 active patients</strong> with a total of <strong>486 sessions</strong> completed. Session adherence remained high at <strong>91%</strong>, with 44 missed sessions recorded across the patient population.</p>
+    <p style="margin-bottom:12px;">Eight new patients commenced dialysis therapy during the month. The average Kt/V across all patients was <strong>1.38</strong>, exceeding the KDOQI target of 1.2. Mean hemoglobin was <strong>10.4 g/dL</strong>, slightly below the target range of 10–12 g/dL for the high-risk subgroup.</p>
+    <p style="margin-bottom:12px;"><strong>14 adverse events</strong> were recorded, including 6 episodes of intradialytic hypotension, 4 access complications, and 4 other clinical incidents. All were managed appropriately and none resulted in hospitalization directly attributable to dialysis.</p>
+    <p>Key action items for next month: ESA protocol review for anemia management, phosphate binder adherence education campaign, and cardiology co-management pathway for high-risk cardiac patients.</p>`;
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+function initCharts() {
+  // Sessions chart
+  new Chart(document.getElementById('chart-sessions').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{ label: 'Sessions', data: [44,48,42,46,45,38,22], backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  // Risk pie
+  new Chart(document.getElementById('chart-risk').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Critical','High','Medium','Low'],
+      datasets: [{ data: [2, 21, 48, 71], backgroundColor: ['#dc2626','#d97706','#3b82f6','#059669'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 8 } } } }
+  });
+
+  // Labs trend
+  new Chart(document.getElementById('chart-labs-trend').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8'],
+      datasets: [
+        { label: 'Avg Hemoglobin', data: [10.8,10.5,10.2,10.4,10.1,9.9,10.3,10.4], borderColor: '#dc2626', tension: 0.4, pointRadius: 3 },
+        { label: 'Avg Potassium', data: [4.8,5.0,4.9,5.1,5.2,5.0,4.9,5.0], borderColor: '#d97706', tension: 0.4, pointRadius: 3 },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+  });
+
+  // Kt/V
+  new Chart(document.getElementById('chart-ktv').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets: [{ label: 'Avg Kt/V', data: [1.32,1.34,1.35,1.37,1.38,1.38], borderColor: '#059669', backgroundColor: 'rgba(5,150,105,0.1)', tension: 0.4, fill: true, pointRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 1.1, max: 1.6 } } }
+  });
+
+  // Hgb
+  new Chart(document.getElementById('chart-hgb').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets: [
+        { label: 'Avg Hemoglobin', data: [10.8,10.6,10.5,10.4,10.3,10.4], borderColor: '#dc2626', tension: 0.4, pointRadius: 4 },
+        { label: 'Target Min', data: [10,10,10,10,10,10], borderColor: '#6b7280', borderDash: [4,4], pointRadius: 0 },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+
+renderPatients(DB.patients);
+renderSessions(DB.dialysis_sessions);
+renderLabs(DB.lab_results);
+renderMeds();
+renderRiskOverview();
+renderInsights();
+renderAlerts(DB.alerts);
+renderDashAlerts();
+renderDashSchedule();
+populateRiskPatientSelect();
+populatePortalSelect();
+populateProfileSelect();
+
+setTimeout(initCharts, 100);
+setTimeout(renderMonitoring, 150);
+lucide.createIcons();
+
+// ============================================================
+// LIVE MONITORING DATA
+// ============================================================
+const LIVE_SESSIONS = [
+  { patient_id:'P001', nurse:'S. Malik', doctor:'Dr. Rahman', start_min:60, total_min:240, weight_pre:73.4,
+    vitals:{ sbp:156, dbp:90, hr:82, uf_current:1.2, uf_target:2.8 }, has_hypotension:false },
+  { patient_id:'P002', nurse:'J. Okonkwo', doctor:'Dr. Rahman', start_min:30, total_min:225,  weight_pre:81.2,
+    vitals:{ sbp:102, dbp:62, hr:96, uf_current:0.8, uf_target:3.2 }, has_hypotension:true },
+  { patient_id:'P003', nurse:'S. Malik', doctor:'Dr. Rahman', start_min:90, total_min:240, weight_pre:66.8,
+    vitals:{ sbp:146, dbp:86, hr:74, uf_current:1.8, uf_target:2.5 }, has_hypotension:false },
+  { patient_id:'P004', nurse:'J. Okonkwo', doctor:'Dr. Rahman', start_min:110, total_min:210, weight_pre:88.6,
+    vitals:{ sbp:168, dbp:94, hr:78, uf_current:1.4, uf_target:2.1 }, has_hypotension:false },
+  { patient_id:'P006', nurse:'S. Malik', doctor:'Dr. Rahman', start_min:45, total_min:240, weight_pre:79.3,
+    vitals:{ sbp:178, dbp:100, hr:88, uf_current:1.6, uf_target:3.5 }, has_hypotension:true },
+  { patient_id:'P009', nurse:'J. Okonkwo', doctor:'Dr. Rahman', start_min:20, total_min:240, weight_pre:62.1,
+    vitals:{ sbp:98, dbp:58, hr:104, uf_current:0.4, uf_target:2.9 }, has_hypotension:true },
+];
+
+let _monitorTick = 0;
+
+function tickMonitoring() {
+  _monitorTick++;
+  LIVE_SESSIONS.forEach(s => {
+    s.start_min = Math.min(s.start_min + 2, s.total_min);
+    s.vitals.uf_current = parseFloat(Math.min(s.vitals.uf_current + 0.05, s.vitals.uf_target).toFixed(2));
+    if (!s.has_hypotension) {
+      s.vitals.sbp += (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random()*3);
+      s.vitals.hr  += (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random()*2);
+    }
+  });
+  renderMonitoring();
+}
+
+function renderMonitoring() {
+  const filterRisk = document.getElementById('monitor-risk-filter').value;
+  const sessions = LIVE_SESSIONS.filter(s => {
+    const p = getPatient(s.patient_id);
+    return !filterRisk || p?.risk_level === filterRisk;
+  });
+
+  let highRiskCount = 0, hypoCount = 0, progressSum = 0;
+  sessions.forEach(s => {
+    const p = getPatient(s.patient_id);
+    if (p?.risk_level === 'Critical' || p?.risk_level === 'High') highRiskCount++;
+    if (s.has_hypotension) hypoCount++;
+    progressSum += Math.round((s.start_min / s.total_min) * 100);
+  });
+
+  document.getElementById('mon-active').textContent = sessions.length;
+  document.getElementById('mon-highrisk').textContent = highRiskCount;
+  document.getElementById('mon-hypo').textContent = hypoCount;
+  document.getElementById('mon-progress').textContent = sessions.length ? Math.round(progressSum / sessions.length) + '%' : '0%';
+  document.getElementById('monitor-count').textContent = `${sessions.length} patient${sessions.length !== 1 ? 's' : ''} on dialysis now`;
+
+  const riskClass = { Critical:'risk-critical', High:'risk-high', Medium:'risk-medium', Low:'risk-low' };
+  const riskColor = { Critical:'var(--color-danger)', High:'var(--color-warning)', Medium:'#3b82f6', Low:'var(--color-success)' };
+
+  // Sort by risk: Critical → High → Medium → Low, then by risk score desc
+  const riskOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+  sessions.sort((a, b) => {
+    const pa = getPatient(a.patient_id), pb = getPatient(b.patient_id);
+    const orderA = riskOrder[pa?.risk_level] ?? 4;
+    const orderB = riskOrder[pb?.risk_level] ?? 4;
+    if (orderA !== orderB) return orderA - orderB;
+    const scoreA = DB.ai_predictions.find(x=>x.patient_id===pa?.id)?.risk_score || pa?.risk_score || 0;
+    const scoreB = DB.ai_predictions.find(x=>x.patient_id===pb?.id)?.risk_score || pb?.risk_score || 0;
+    return scoreB - scoreA;
+  });
+
+  let rankIndex = 0;
+  document.getElementById('monitoring-grid').innerHTML = sessions.map(s => {
+    const p = getPatient(s.patient_id);
+    if (!p) return '';
+    const pred = DB.ai_predictions.find(x => x.patient_id === p.id);
+    const rl = p.risk_level;
+    const rs = pred?.risk_score || p.risk_score || 20;
+    const pct = Math.round((s.start_min / s.total_min) * 100);
+    const elapsed_h = Math.floor(s.start_min / 60);
+    const elapsed_m = s.start_min % 60;
+    const remain_m  = s.total_min - s.start_min;
+    const remain_h  = Math.floor(remain_m / 60);
+    const remain_mm = remain_m % 60;
+
+    const sbpAbn = s.vitals.sbp > 170 || s.vitals.sbp < 100;
+    const hrAbn  = s.vitals.hr > 100 || s.vitals.hr < 55;
+    const ufPct  = Math.round((s.vitals.uf_current / s.vitals.uf_target) * 100);
+
+    const alerts = [];
+    if (s.has_hypotension) alerts.push({ txt:'⚡ Hypotension', cls:'badge-danger alert-flash' });
+    if (sbpAbn && s.vitals.sbp > 170) alerts.push({ txt:'↑ Hypertensive', cls:'badge-warning' });
+    if (hrAbn)   alerts.push({ txt:'HR Abnormal', cls:'badge-warning' });
+    if (rs >= 80) alerts.push({ txt:'Critical Risk', cls:'badge-danger' });
+
+    const sbpBoxCls = sbpAbn ? (s.vitals.sbp < 100 ? 'vital-box-alert' : 'vital-box-warn') : '';
+    const hrBoxCls  = hrAbn ? 'vital-box-warn' : '';
+    const progressColor = pct >= 75 ? 'var(--color-success)' : pct >= 40 ? '#2563eb' : 'var(--color-warning)';
+    rankIndex++;
+
+    return `<div class="monitor-card ${riskClass[rl] || 'risk-low'}">
+      <span class="monitor-rank-badge">${rl}</span>
+
+      <div class="monitor-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="position:relative;">
+            <div class="avatar" style="width:42px;height:42px;font-size:14px;font-weight:800;background:${riskColor[rl]};box-shadow:0 0 0 3px ${riskColor[rl]}33;">
+              ${p.name.split(' ').map(x=>x[0]).join('').slice(0,2)}
+            </div>
+            ${rl==='Critical'||rl==='High' ? `<span style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:${riskColor[rl]};border:2px solid white;animation:pulse-anim 1.2s infinite;"></span>` : ''}
+          </div>
+          <div>
+            <div style="font-weight:700; font-size:15px; color:var(--color-text);">${p.name}</div>
+            <div style="font-size:11px; color:var(--color-muted);">${p.id} · ${p.diagnosis.slice(0,26)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="monitor-body">
+
+        <!-- Risk score bar -->
+        <div class="risk-score-mini">
+          <span style="font-size:11px;font-weight:600;color:var(--color-muted);width:60px;">Risk Score</span>
+          <div class="risk-score-mini-bar">
+            <div class="risk-score-mini-fill" style="width:${rs}%;background:${riskColor[rl]};"></div>
+          </div>
+          <span style="font-size:13px;font-weight:800;color:${riskColor[rl]};min-width:30px;text-align:right;">${rs}</span>
+        </div>
+
+        <!-- Alerts -->
+        ${alerts.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">${alerts.map(a=>`<span class="badge ${a.cls}" style="font-size:10px;">${a.txt}</span>`).join('')}</div>` : ''}
+
+        <!-- Session progress -->
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-muted);margin-bottom:4px;">
+          <span>Session Progress</span>
+          <span><b>${elapsed_h}h ${elapsed_m}m</b> elapsed · ${remain_h}h ${remain_mm}m left</span>
+        </div>
+        <div class="session-progress-bar">
+          <div class="session-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${progressColor},${progressColor}aa);"></div>
+        </div>
+        <div style="font-size:11px;color:var(--color-muted);margin-bottom:12px;text-align:right;">${pct}% complete</div>
+
+        <!-- Vitals -->
+        <div class="monitor-vitals">
+          <div class="vital-box ${sbpBoxCls}">
+            <div class="vital-label">BP</div>
+            <div class="vital-value ${sbpAbn?(s.vitals.sbp<100?'vital-abnormal':'vital-warning'):'vital-normal'}">${s.vitals.sbp}/${s.vitals.dbp}</div>
+            <div class="vital-unit">mmHg ${sbpAbn?(s.vitals.sbp<100?'⚠ Low':'↑ High'):''}</div>
+          </div>
+          <div class="vital-box ${hrBoxCls}">
+            <div class="vital-label">Heart Rate</div>
+            <div class="vital-value ${hrAbn?'vital-warning':'vital-normal'}">${s.vitals.hr}</div>
+            <div class="vital-unit">bpm ${hrAbn?'⚠':''}</div>
+          </div>
+          <div class="vital-box">
+            <div class="vital-label">UF Volume</div>
+            <div class="vital-value vital-normal">${s.vitals.uf_current.toFixed(1)}</div>
+            <div class="vital-unit">/ ${s.vitals.uf_target} L</div>
+          </div>
+        </div>
+
+        <!-- UF bar -->
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-muted);margin-bottom:3px;">
+            <span>Fluid Removal</span><span>${s.vitals.uf_current.toFixed(1)} / ${s.vitals.uf_target} L (${ufPct}%)</span>
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:${ufPct}%;background:${ufPct>80?'var(--color-success)':'var(--color-accent)'};"></div></div>
+        </div>
+
+        <!-- Info row -->
+        <div style="font-size:12px;color:var(--color-muted);display:flex;gap:16px;padding-top:4px;border-top:1px solid var(--color-border);">
+          <span>⚖ <b style="color:var(--color-text);">${s.weight_pre} kg</b></span>
+          <span>👤 <b style="color:var(--color-text);">${s.nurse}</b></span>
+        </div>
+      </div>
+
+      <div class="monitor-footer">
+        <span style="display:flex;align-items:center;gap:5px;"><i data-lucide="stethoscope" style="width:12px;height:12px;"></i> ${s.doctor}</span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm" onclick="openProfile('${p.id}')">Profile</button>
+          <button class="btn btn-sm btn-primary" onclick="navigate('alerts')">Alerts</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+// Auto-tick monitoring every 30s when on that view
+setInterval(() => {
+  if (document.getElementById('view-monitoring')?.classList.contains('active')) tickMonitoring();
+}, 30000);
+
+// ============================================================
+// CLINICAL PROFILE
+// ============================================================
+
+// Extended mock data per patient
+const PATIENT_VITALS_HISTORY = {
+  P001: { bp_sys:[162,158,155,160,156,154,158,156], bp_dia:[94,90,88,92,90,88,91,90], hr:[80,82,79,83,81,80,82,82], weight:[74.1,73.8,73.6,74.0,73.5,73.4,73.3,73.4], uf:[2.5,2.6,2.7,2.8,2.7,2.8,2.9,2.8] },
+  P002: { bp_sys:[168,162,170,165,172,160,165,162], bp_dia:[98,96,100,95,102,92,96,96], hr:[88,90,94,91,96,89,92,90], weight:[82.0,81.8,82.2,81.6,81.9,81.4,81.3,81.2], uf:[3.0,3.1,3.2,2.9,3.1,3.3,3.2,3.2] },
+  P003: { bp_sys:[150,148,152,146,150,148,146,146], bp_dia:[88,86,90,84,88,86,85,86], hr:[74,76,75,73,75,74,73,74], weight:[67.2,67.0,66.9,66.8,67.1,66.8,66.7,66.8], uf:[2.3,2.4,2.5,2.5,2.4,2.5,2.6,2.5] },
+  P004: { bp_sys:[175,172,170,168,174,170,169,168], bp_dia:[96,95,94,93,96,95,94,94], hr:[76,78,77,76,79,77,76,78], weight:[89.1,88.9,88.7,88.5,88.8,88.6,88.5,88.6], uf:[1.9,2.0,2.1,2.1,2.0,2.1,2.2,2.1] },
+  P005: { bp_sys:[138,136,134,135,132,130,134,136], bp_dia:[84,82,80,82,80,78,82,84], hr:[72,71,70,72,71,70,72,72], weight:[58.2,58.0,57.8,58.1,57.9,57.8,57.8,57.9], uf:[1.8,1.9,1.9,1.8,1.9,2.0,1.9,1.9] },
+  P006: { bp_sys:[185,180,178,182,180,178,180,178], bp_dia:[104,100,98,102,100,100,100,100], hr:[86,88,90,88,92,88,88,88], weight:[80.0,79.8,79.6,79.4,79.5,79.3,79.2,79.3], uf:[3.3,3.4,3.5,3.4,3.5,3.6,3.5,3.5] },
+  P007: { bp_sys:[154,152,150,151,148,150,149,152], bp_dia:[90,90,88,89,86,88,87,90], hr:[74,75,74,73,74,75,74,74], weight:[68.5,68.3,68.2,68.1,68.0,67.9,67.8,68.0], uf:[2.5,2.6,2.7,2.7,2.6,2.7,2.8,2.7] },
+  P008: { bp_sys:[147,145,144,146,143,144,145,145], bp_dia:[88,86,85,87,84,85,86,88], hr:[72,73,72,71,73,72,71,72], weight:[75.2,75.0,74.8,74.9,74.7,74.6,74.5,74.5], uf:[2.2,2.3,2.3,2.2,2.3,2.3,2.4,2.3] },
+  P009: { bp_sys:[170,165,168,162,170,165,160,165], bp_dia:[98,94,96,92,98,94,90,95], hr:[90,95,98,92,100,95,102,104], weight:[63.0,62.8,62.6,62.4,62.5,62.3,62.2,62.1], uf:[2.7,2.8,2.9,2.8,2.9,2.9,3.0,2.9] },
+  P010: { bp_sys:[132,130,128,130,129,128,127,128], bp_dia:[82,80,79,81,80,78,79,80], hr:[68,70,69,68,70,69,68,70], weight:[70.1,70.0,69.9,69.8,69.9,69.8,69.7,69.8], uf:[1.5,1.6,1.6,1.5,1.6,1.7,1.6,1.6] },
+};
+
+const FULL_LAB_PANEL = {
+  P001: [
+    { name:'Potassium', val:5.8, unit:'mEq/L', lo:3.5, hi:5.0 },
+    { name:'Sodium', val:138, unit:'mEq/L', lo:136, hi:145 },
+    { name:'Creatinine', val:8.4, unit:'mg/dL', lo:0.6, hi:1.2 },
+    { name:'BUN (Urea)', val:62, unit:'mg/dL', lo:7, hi:25 },
+    { name:'Hemoglobin', val:8.9, unit:'g/dL', lo:10.0, hi:12.0 },
+    { name:'Calcium', val:8.8, unit:'mg/dL', lo:8.5, hi:10.5 },
+    { name:'Phosphorus', val:5.4, unit:'mg/dL', lo:2.5, hi:5.5 },
+    { name:'Albumin', val:3.4, unit:'g/dL', lo:3.5, hi:5.0 },
+    { name:'eGFR', val:6, unit:'mL/min', lo:60, hi:120 },
+  ],
+  P002: [
+    { name:'Potassium', val:6.2, unit:'mEq/L', lo:3.5, hi:5.0 },
+    { name:'Sodium', val:136, unit:'mEq/L', lo:136, hi:145 },
+    { name:'Creatinine', val:9.1, unit:'mg/dL', lo:0.6, hi:1.2 },
+    { name:'BUN (Urea)', val:78, unit:'mg/dL', lo:7, hi:25 },
+    { name:'Hemoglobin', val:10.2, unit:'g/dL', lo:10.0, hi:12.0 },
+    { name:'Calcium', val:9.0, unit:'mg/dL', lo:8.5, hi:10.5 },
+    { name:'Phosphorus', val:5.1, unit:'mg/dL', lo:2.5, hi:5.5 },
+    { name:'Albumin', val:3.1, unit:'g/dL', lo:3.5, hi:5.0 },
+    { name:'eGFR', val:5, unit:'mL/min', lo:60, hi:120 },
+  ],
+  P003: [
+    { name:'Potassium', val:4.9, unit:'mEq/L', lo:3.5, hi:5.0 },
+    { name:'Sodium', val:140, unit:'mEq/L', lo:136, hi:145 },
+    { name:'Creatinine', val:7.8, unit:'mg/dL', lo:0.6, hi:1.2 },
+    { name:'BUN (Urea)', val:55, unit:'mg/dL', lo:7, hi:25 },
+    { name:'Hemoglobin', val:11.0, unit:'g/dL', lo:10.0, hi:12.0 },
+    { name:'Calcium', val:9.2, unit:'mg/dL', lo:8.5, hi:10.5 },
+    { name:'Phosphorus', val:7.2, unit:'mg/dL', lo:2.5, hi:5.5 },
+    { name:'Albumin', val:3.6, unit:'g/dL', lo:3.5, hi:5.0 },
+    { name:'eGFR', val:7, unit:'mL/min', lo:60, hi:120 },
+  ],
+};
+
+const RISK_HISTORY = {
+  P001: [
+    { date:'2026-06-12', score:74, level:'High', factors:['Low hemoglobin','Elevated K+'] },
+    { date:'2026-05-15', score:68, level:'High', factors:['Low hemoglobin','Borderline K+'] },
+    { date:'2026-04-10', score:61, level:'Medium', factors:['Low hemoglobin'] },
+    { date:'2026-03-05', score:55, level:'Medium', factors:['Suboptimal Kt/V'] },
+  ],
+  P002: [
+    { date:'2026-06-12', score:88, level:'Critical', factors:['Critical K+','Hypotension','Missed session','Acidosis'] },
+    { date:'2026-05-20', score:72, level:'High', factors:['Elevated K+','Hypotension'] },
+    { date:'2026-04-15', score:64, level:'High', factors:['Elevated K+'] },
+    { date:'2026-03-10', score:50, level:'Medium', factors:['Suboptimal Kt/V'] },
+  ],
+  P009: [
+    { date:'2026-06-10', score:83, level:'Critical', factors:['Critical anemia','Advanced age','Hypotension'] },
+    { date:'2026-05-10', score:75, level:'High', factors:['Low hemoglobin','Hypotension'] },
+    { date:'2026-04-05', score:66, level:'High', factors:['Low hemoglobin'] },
+    { date:'2026-03-01', score:58, level:'Medium', factors:['Low hemoglobin','Advanced age'] },
+  ],
+};
+
+const MED_SIDE_EFFECTS = {
+  'Erythropoietin (EPO)': 'Hypertension, thrombosis risk',
+  'Calcium Carbonate': 'Constipation, hypercalcemia',
+  'Insulin Glargine': 'Hypoglycemia, weight gain',
+  'Carvedilol': 'Bradycardia, hypotension',
+  'Sevelamer': 'GI discomfort, nausea',
+  'Cinacalcet': 'Nausea, hypocalcemia',
+  'Hydroxychloroquine': 'Retinopathy (rare), GI upset',
+  'Iron Sucrose': 'Hypotension, GI upset',
+  'Amlodipine': 'Ankle edema, flushing',
+  'Darbepoetin Alfa': 'Hypertension, thrombosis',
+};
+
+const FOLLOWUP_ACTIONS = {
+  P001: ['Repeat Hgb in 4 weeks','Dietitian referral (K+ restriction)','Increase EPO to 6000 IU','Access review for AVF thrill'],
+  P002: ['Cardiology consult — urgent','Repeat BMP tomorrow morning','Dialysate K+ adjustment to 2.0 mEq/L','Social work for adherence support'],
+  P003: ['Recheck phosphorus in 2 weeks','Increase Sevelamer dose','Dietitian referral (phosphorus)','Routine access review'],
+  P004: ['Parathyroidectomy referral','Optimize Cinacalcet dose','Bone density scan','Vitamin D metabolite levels'],
+  P005: ['Routine labs monthly','Continue current management','Annual ophthalmology (HCQ)','Rheumatology co-management'],
+  P006: ['Complete IV iron course (3 sessions remaining)','Antihypertensive review','Reduce UF rate to 0.8 L/h max','Follow-up BP monitoring daily'],
+  P007: ['Routine monthly monitoring','Amlodipine dose review in 3 months','Quarterly access review'],
+  P008: ['Routine monthly monitoring','Quarterly lab panel','Access site check'],
+  P009: ['Darbepoetin dose escalation','Transfusion threshold review','Cardiology referral','Daily weight monitoring','UF rate reduction'],
+  P010: ['Routine monthly monitoring','Access maturation check (new AVF)','Nutritional assessment'],
+};
+
+let _cpCharts = {};
+
+function populateProfileSelect() {
+  const sel = document.getElementById('profile-patient-select');
+  DB.patients.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id; o.textContent = `${p.id} — ${p.name}`;
+    sel.appendChild(o);
+  });
+}
+
+function openProfile(pid) {
+  navigate('profile');
+  document.getElementById('profile-patient-select').value = pid;
+  loadProfile();
+}
+
+function switchProfileTab(name, el) {
+  document.querySelectorAll('.cp-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#profile-tabs .tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('cp-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function loadProfile() {
+  const pid = document.getElementById('profile-patient-select').value;
+  if (!pid) {
+    document.getElementById('profile-content').style.display = 'none';
+    document.getElementById('profile-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('profile-content').style.display = 'block';
+  document.getElementById('profile-empty').style.display = 'none';
+
+  const p = getPatient(pid);
+  const pred = DB.ai_predictions.find(x => x.patient_id === pid);
+  const pMeds = DB.medications.filter(m => m.patient_id === pid && m.status === 'Active');
+  const pSessions = DB.dialysis_sessions.filter(s => s.patient_id === pid);
+  const notes = DB.doctor_notes.filter(n => n.patient_id === pid);
+  const vit = PATIENT_VITALS_HISTORY[pid] || PATIENT_VITALS_HISTORY['P007'];
+  const labs = FULL_LAB_PANEL[pid] || FULL_LAB_PANEL['P003'];
+  const riskHist = RISK_HISTORY[pid];
+
+  // Avatar color
+  const avatarColors = ['#2563eb','#dc2626','#d97706','#059669','#7c3aed','#0891b2','#ea580c','#0f766e','#be185d','#4338ca'];
+  const avatarColor = avatarColors[DB.patients.indexOf(p) % avatarColors.length];
+  const initials = p.name.split(' ').map(x=>x[0]).join('').slice(0,2);
+
+  document.getElementById('cp-avatar').style.background = avatarColor;
+  document.getElementById('cp-avatar').textContent = initials;
+  document.getElementById('cp-name').textContent = p.name;
+  document.getElementById('cp-risk-badge').innerHTML = riskBadge(p.risk_level);
+  document.getElementById('cp-risk-score-pill').textContent = `Risk Score: ${pred?.risk_score || p.risk_score}`;
+
+  document.getElementById('cp-subline').innerHTML =
+    `${p.gender === 'F' ? 'Female' : 'Male'}, ${p.age} years · ${p.diagnosis} · ${p.modality} · Access: ${p.access} · On dialysis since ${p.start}`;
+
+  document.getElementById('cp-quick-stats').innerHTML = `
+    <div><div style="font-size:11px;color:var(--color-muted);">Assigned Doctor</div><div style="font-weight:600;font-size:13px;">${p.doctor}</div></div>
+    <div><div style="font-size:11px;color:var(--color-muted);">Nurse</div><div style="font-weight:600;font-size:13px;">S. Malik</div></div>
+    <div><div style="font-size:11px;color:var(--color-muted);">Total Sessions</div><div style="font-weight:600;font-size:13px;">${pSessions.length + 42}</div></div>
+    <div><div style="font-size:11px;color:var(--color-muted);">Last Session</div><div style="font-weight:600;font-size:13px;">${pSessions.filter(s=>s.status==='Completed').slice(-1)[0]?.date || '—'}</div></div>`;
+
+  // Reset to vitals tab
+  document.querySelectorAll('.cp-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('cp-vitals').classList.add('active');
+  document.querySelectorAll('#profile-tabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
+
+  // Bind XGBoost button to current patient
+  const xgbBtn = document.getElementById('btn-run-xgb');
+  if (xgbBtn) xgbBtn.dataset.pid = pid;
+  updateAPIStatusBadge();
+
+  // Destroy old charts
+  Object.values(_cpCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+  _cpCharts = {};
+
+  const labels8 = ['S-8','S-7','S-6','S-5','S-4','S-3','S-2','S-1'];
+
+  // BP chart
+  _cpCharts.bp = new Chart(document.getElementById('cp-chart-bp').getContext('2d'), {
+    type:'line',
+    data:{ labels:labels8, datasets:[
+      { label:'Systolic', data:vit.bp_sys, borderColor:'#dc2626', tension:0.4, pointRadius:3 },
+      { label:'Diastolic', data:vit.bp_dia, borderColor:'#f97316', tension:0.4, pointRadius:3 },
+      { label:'Target SBP', data:Array(8).fill(140), borderColor:'#9ca3af', borderDash:[4,4], pointRadius:0 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{size:10} } } }, scales:{ y:{ min:50 } } }
+  });
+
+  // HR chart
+  _cpCharts.hr = new Chart(document.getElementById('cp-chart-hr').getContext('2d'), {
+    type:'line',
+    data:{ labels:labels8, datasets:[
+      { label:'Heart Rate (bpm)', data:vit.hr, borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,0.08)', tension:0.4, pointRadius:3, fill:true },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ min:50, max:120 } } }
+  });
+
+  // Weight chart
+  _cpCharts.weight = new Chart(document.getElementById('cp-chart-weight').getContext('2d'), {
+    type:'line',
+    data:{ labels:labels8, datasets:[
+      { label:'Pre-dialysis weight (kg)', data:vit.weight, borderColor:'#059669', backgroundColor:'rgba(5,150,105,0.08)', tension:0.4, pointRadius:3, fill:true },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
+  });
+
+  // UF chart
+  _cpCharts.uf = new Chart(document.getElementById('cp-chart-uf').getContext('2d'), {
+    type:'bar',
+    data:{ labels:labels8, datasets:[
+      { label:'UF Volume (L)', data:vit.uf, backgroundColor:'rgba(37,99,235,0.65)', borderRadius:4 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ min:0, max:5 } } }
+  });
+
+  // ---- LABS TAB ----
+  document.getElementById('cp-lab-panel').innerHTML = labs.map(l => {
+    const isHigh = l.val > l.hi, isLow = l.val < l.lo;
+    const isCrit = isHigh ? l.val > l.hi * 1.3 : (isLow ? l.val < l.lo * 0.7 : false);
+    const col = isCrit ? 'var(--color-danger)' : (isHigh || isLow) ? 'var(--color-warning)' : 'var(--color-success)';
+    const pct = Math.min(100, Math.max(0, Math.round(((l.val - l.lo) / (l.hi - l.lo)) * 100)));
+    const clamp = Math.min(98, Math.max(2, pct));
+    return `<div class="lab-row">
+      <div class="lab-name">${l.name}</div>
+      <div class="lab-bar-wrap">
+        <div class="lab-bar-marker" style="left:${clamp}%; background:${col};"></div>
+        <div style="height:6px; background:#e5e7eb; border-radius:3px;"></div>
+      </div>
+      <div class="lab-val" style="color:${col};">${l.val} ${l.unit}</div>
+      <div class="lab-ref">${l.lo}–${l.hi}</div>
+    </div>`;
+  }).join('');
+
+  // Labs trend chart
+  const labMonths = ['Jan','Feb','Mar','Apr','May','Jun'];
+  const labIdx = DB.patients.indexOf(p);
+  const seedHgb = [10.8+labIdx*0.1, 10.5, 10.3, 10.2+labIdx*0.05, 10.1, labs.find(l=>l.name==='Hemoglobin')?.val || 10.2];
+  const seedK   = [5.0+labIdx*0.05, 5.1, 5.2, 5.0, 5.1, labs.find(l=>l.name==='Potassium')?.val || 5.0];
+  _cpCharts.labs = new Chart(document.getElementById('cp-chart-labs').getContext('2d'), {
+    type:'line',
+    data:{ labels:labMonths, datasets:[
+      { label:'Hemoglobin (g/dL)', data:seedHgb, borderColor:'#dc2626', tension:0.4, pointRadius:4, yAxisID:'y' },
+      { label:'Potassium (mEq/L)', data:seedK, borderColor:'#d97706', tension:0.4, pointRadius:4, yAxisID:'y2' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:11} } } },
+      scales:{ y:{ position:'left', min:6, max:14, title:{ display:true, text:'Hgb (g/dL)', font:{size:10} } },
+               y2:{ position:'right', min:3, max:7, title:{ display:true, text:'K+ (mEq/L)', font:{size:10} }, grid:{ drawOnChartArea:false } } }
+    }
+  });
+
+  // ---- MEDS TAB ----
+  document.getElementById('cp-meds-tbody').innerHTML = pMeds.map(m => `
+    <tr>
+      <td style="font-weight:600;">${m.drug}</td>
+      <td style="font-family:monospace; font-size:12px;">${m.dose}</td>
+      <td>${m.freq}</td>
+      <td><span class="badge badge-${m.route==='IV'?'info':m.route==='SC'?'warning':'muted'}">${m.route}</span></td>
+      <td style="font-size:12px;">${m.start}</td>
+      <td style="font-size:12px; color:var(--color-muted); max-width:160px;">${MED_SIDE_EFFECTS[m.drug] || '—'}</td>
+      <td>${m.flag ? '<span class="badge badge-warning">⚠ Review</span>' : '<span class="badge badge-success">Clear</span>'}</td>
+      <td>${statusBadge(m.status)}</td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center; color:var(--color-muted);">No medications</td></tr>';
+
+  // ---- HISTORY TAB ----
+  document.getElementById('cp-history-tbody').innerHTML = pSessions.map(s => {
+    const compBadge = s.complications && s.complications !== 'None' && s.complications !== '--'
+      ? `<span class="badge badge-warning">${s.complications}</span>`
+      : '<span style="color:var(--color-muted); font-size:12px;">None</span>';
+    const ktvColor = parseFloat(s.ktv) < 1.2 && s.ktv !== '--' ? 'var(--color-warning)' : 'var(--color-success)';
+    return `<tr>
+      <td style="font-size:12px;">${s.date}</td>
+      <td>${s.duration}</td>
+      <td>${s.uf_volume} L</td>
+      <td style="font-family:monospace; font-size:12px;">${s.pre_bp}</td>
+      <td style="font-family:monospace; font-size:12px;">${s.post_bp}</td>
+      <td>${vit.hr[pSessions.indexOf(s) % 8] || '—'} bpm</td>
+      <td style="font-weight:600; color:${ktvColor};">${s.ktv}</td>
+      <td>${compBadge}</td>
+      <td style="font-size:12px;">${s.nurse}</td>
+      <td>${statusBadge(s.status)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="10" style="text-align:center; color:var(--color-muted);">No sessions recorded</td></tr>';
+
+  // ---- AI RISK TAB ----
+  const rh = riskHist || [{ date:'2026-06-10', score: pred?.risk_score || p.risk_score, level: p.risk_level, factors: pred?.risk_factors || [] }];
+  const riskCol = s => s >= 80 ? 'var(--color-danger)' : s >= 60 ? 'var(--color-warning)' : s >= 35 ? '#3b82f6' : 'var(--color-success)';
+
+  _cpCharts.riskTrend = new Chart(document.getElementById('cp-chart-risk-trend').getContext('2d'), {
+    type:'line',
+    data:{ labels: rh.map(r=>r.date).reverse(), datasets:[{
+      label:'Risk Score', data: rh.map(r=>r.score).reverse(),
+      borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,0.1)', tension:0.4, pointRadius:5, fill:true,
+      pointBackgroundColor: rh.map(r=>r.score).reverse().map(s=>riskCol(s)),
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ min:0, max:100, ticks:{ stepSize:20 } } }
+    }
+  });
+
+  document.getElementById('cp-risk-breakdown').innerHTML = pred
+    ? `<div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <div class="risk-score-circle ${pred.risk_level==='Critical'||pred.risk_level==='High'?'risk-high':pred.risk_level==='Medium'?'risk-medium':'risk-low'}" style="width:70px;height:70px;">
+          <div class="risk-score-num" style="font-size:20px;">${pred.risk_score}</div>
+          <div class="risk-score-lbl">/ 100</div>
+        </div>
+        <div>
+          <div style="font-size:16px; font-weight:700; color:${riskCol(pred.risk_score)};">${pred.risk_level} Risk</div>
+          <div style="font-size:12px; color:var(--color-muted);">Updated ${pred.calculated}</div>
+        </div>
+      </div>
+      <div style="font-size:12px; font-weight:600; margin-bottom:6px;">Risk Factors</div>
+      ${pred.risk_factors.length ? pred.risk_factors.map(f=>`<div style="display:flex;gap:6px;align-items:center;padding:4px 0;font-size:12px;"><span style="color:var(--color-danger);">●</span>${f}</div>`).join('') : '<div style="font-size:12px;color:var(--color-muted);">No significant risk factors</div>'}
+      <div style="font-size:12px; font-weight:600; margin:10px 0 6px;">Recommendations</div>
+      ${pred.recommendations.map(r=>`<div style="display:flex;gap:6px;align-items:flex-start;padding:4px 0;font-size:12px;"><span style="color:var(--color-success);flex-shrink:0;">✓</span>${r}</div>`).join('')}`
+    : '<div style="color:var(--color-muted);font-size:13px;">No risk prediction available</div>';
+
+  document.getElementById('cp-risk-history-list').innerHTML = rh.map(r => `
+    <div class="risk-history-row">
+      <div style="font-size:12px; color:var(--color-muted); min-width:90px;">${r.date}</div>
+      <div style="width:60px; height:6px; background:#e5e7eb; border-radius:3px; overflow:hidden;">
+        <div style="width:${r.score}%; height:100%; background:${riskCol(r.score)}; border-radius:3px;"></div>
+      </div>
+      <span style="font-weight:700; color:${riskCol(r.score)}; min-width:28px;">${r.score}</span>
+      ${riskBadge(r.level)}
+      <div style="font-size:12px; color:var(--color-muted); flex:1;">${r.factors.join(' · ') || 'No significant factors'}</div>
+    </div>`).join('');
+
+  // ---- NOTES TAB ----
+  document.getElementById('cp-notes-list').innerHTML = notes.length
+    ? notes.map(n => `<div class="note-card">
+        <div style="font-size:11px; color:var(--color-muted); margin-bottom:6px;">${n.date} · ${n.doctor}</div>
+        <div style="line-height:1.6;">${n.note}</div>
+      </div>`).join('')
+    : `<div class="note-card" style="border-left-color:var(--color-muted); color:var(--color-muted); font-size:13px;">No clinical notes recorded. This patient is stable with routine monitoring.</div>`;
+
+  const followups = FOLLOWUP_ACTIONS[pid] || ['Routine monthly monitoring', 'Quarterly lab panel'];
+  document.getElementById('cp-followup-list').innerHTML = followups.map((f, i) => `
+    <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--color-border);">
+      <div style="width:22px; height:22px; border-radius:50%; background:var(--color-accent-light); color:var(--color-accent); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;">${i+1}</div>
+      <div style="flex:1; font-size:13px; padding-top:2px;">${f}</div>
+      <button class="btn btn-sm" style="font-size:11px;">Mark done</button>
+    </div>`).join('');
+}
+
+// Additional nav items added after initial navItems capture — re-bind all
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => navigate(item.dataset.view));
+});
+</script>
+</body>
+</html>
